@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="297mm" height="210mm" viewBox="0 0 1188 840">
+  <defs>
+    <clipPath id="top"><rect width="260" height="180"/></clipPath>
+    <clipPath id="bottom"><rect y="180" width="260" height="180"/></clipPath>
+    <style>.c{fill:#fffaf0;stroke:#17233c;stroke-width:4}.g{fill:none;stroke:#bc8e32;stroke-width:7}.t{font:700 92px Georgia;fill:#12366a}.s{font:25px serif;fill:#bc8e32}</style>
+  </defs>
+  <rect width="1188" height="840" fill="white"/>
+  <!-- Quatre bases : moitié supérieure des lettres -->
+  <g transform="translate(28 25)"><rect class="c" width="260" height="360" rx="16"/><circle class="g" cx="130" cy="180" r="100"/><path class="g" d="M20 330L240 30"/><text class="t" x="130" y="205" text-anchor="middle" clip-path="url(#top)">AI</text><text class="s" x="15" y="35">★</text></g>
+  <g transform="translate(318 25)"><rect class="c" width="260" height="360" rx="16"/><circle class="g" cx="130" cy="180" r="100"/><path class="g" d="M20 55Q130 310 240 55"/><text class="t" x="130" y="205" text-anchor="middle" clip-path="url(#top)">GU</text><text class="s" x="15" y="35">★★</text></g>
+  <g transform="translate(608 25)"><rect class="c" width="260" height="360" rx="16"/><circle class="g" cx="130" cy="180" r="100"/><path class="g" d="M20 180H240"/><text class="t" x="130" y="205" text-anchor="middle" clip-path="url(#top)">IL</text><text class="s" x="15" y="35">★★★</text></g>
+  <g transform="translate(898 25)"><rect class="c" width="260" height="360" rx="16"/><circle class="g" cx="130" cy="180" r="100"/><path class="g" d="M25 35L235 325"/><text class="t" x="130" y="205" text-anchor="middle" clip-path="url(#top)">LE</text><text class="s" x="15" y="35">★★★★</text></g>
+  <!-- Quatre calques transparents, volontairement mélangés -->
+  <g transform="translate(28 445)"><rect class="c" fill-opacity=".08" width="260" height="360" rx="16"/><circle class="g" cx="130" cy="180" r="100"/><path class="g" d="M20 180H240"/><text class="t" x="130" y="205" text-anchor="middle" clip-path="url(#bottom)">IL</text></g>
+  <g transform="translate(318 445)"><rect class="c" fill-opacity=".08" width="260" height="360" rx="16"/><circle class="g" cx="130" cy="180" r="100"/><path class="g" d="M20 330L240 30"/><text class="t" x="130" y="205" text-anchor="middle" clip-path="url(#bottom)">AI</text></g>
+  <g transform="translate(608 445)"><rect class="c" fill-opacity=".08" width="260" height="360" rx="16"/><circle class="g" cx="130" cy="180" r="100"/><path class="g" d="M25 35L235 325"/><text class="t" x="130" y="205" text-anchor="middle" clip-path="url(#bottom)">LE</text></g>
+  <g transform="translate(898 445)"><rect class="c" fill-opacity=".08" width="260" height="360" rx="16"/><circle class="g" cx="130" cy="180" r="100"/><path class="g" d="M20 55Q130 310 240 55"/><text class="t" x="130" y="205" text-anchor="middle" clip-path="url(#bottom)">GU</text></g>
+</svg>
