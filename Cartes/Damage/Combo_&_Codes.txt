@@ -1,0 +1,14 @@
+R = +
+U = −
+B = ×
+G = ÷
+
+M → N → copie N → Q → O récupère N → N → S : 27dmg => Code: 500 −2 +3 +3 ÷2 ×2 +3 ×3 = 1521
+
+L → M → N → copie N → Q → O récupère N → N → S : 31dmg => Code : 500 +1 −2 +3 +3 ÷2 ×2 +3 ×3 = 1524
+
+P → M → N → copie N → Q → O récupère N → N → S : 32dmg => Code : 500 +2 −2 +3 +3 ÷2 ×2 +3 ×3 = 1527
+
+P → T → Q → P flashback → copie de P → N → O récupère N → N → S : 32dmg => Code : 500 +2 −2 ÷2 +3 +2 +3 ×2 +3 ×3 = 1542
+
+P → T → M → P flashback → N → O récupère N → N → S : 32dmg => Code : 500 +2 −2 −2 +3 +2 +2 +3 ×2 +3 ×3 = 3057
