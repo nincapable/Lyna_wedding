@@ -1,82 +1,129 @@
 'use client';
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 
-// Remplace simplement ces valeurs pour modifier les codes acceptés.
-const VALID_CODES = {
-  lock1: ['3816', '7482', '1904', '2631', '5279'],
-  lock2: ['2543', '9062', '4418', '1357', '6820'],
-};
-
-type Stage = 1 | 2 | 3;
+type Game = { code: string; stage: 1 | 2 | 3; attempts: number; updatedAt: string };
+type Tab = 'cadenas' | 'enquete' | 'chronologie' | 'mj';
+const DOCUMENTS = [
+  { title: 'Rapport d’anomalie', stage: 1, body: 'Une oscillation temporelle a été enregistrée près du vestiaire à 22 h 14. Trois signatures distinctes se chevauchent.' },
+  { title: 'Journal des appels', stage: 2, body: 'À 22 h 11, un appel de 47 secondes est émis depuis le couloir nord. Le terminal déclaré était pourtant hors service.' },
+  { title: 'Dossier d’empreintes', stage: 3, body: 'La trace relevée sur l’écrin correspond à un voyageur portant des gants à ancrage chronal de deuxième génération.' },
+];
 
 export default function Home() {
-  const [stage, setStage] = useState<Stage>(1);
+  const [game, setGame] = useState<Game | null>(null);
+  const [joinCode, setJoinCode] = useState('');
+  const [gmToken, setGmToken] = useState('');
   const [code, setCode] = useState('');
+  const [tab, setTab] = useState<Tab>('cadenas');
   const [message, setMessage] = useState('');
-  const [attempts, setAttempts] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    const stored = Number(localStorage.getItem('bague-stage')) as Stage;
-    if (stored === 2 || stored === 3) setStage(stored);
+  const loadGame = useCallback(async (sessionCode: string, silent = false) => {
+    try {
+      const response = await fetch(`/api/games/${sessionCode}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error(response.status === 404 ? 'Partie introuvable.' : 'Synchronisation impossible.');
+      setGame(await response.json() as Game);
+      if (!silent) setMessage('Partie synchronisée.');
+      return true;
+    } catch (error) {
+      if (!silent) setMessage(error instanceof Error ? error.message : 'Erreur inconnue.');
+      return false;
+    }
   }, []);
 
-  useEffect(() => { inputRef.current?.focus(); }, [stage]);
+  useEffect(() => {
+    queueMicrotask(() => {
+      const savedCode = localStorage.getItem('bague-game-code');
+      const savedToken = localStorage.getItem('bague-gm-token') ?? '';
+      if (savedCode) { setJoinCode(savedCode); setGmToken(savedToken); void loadGame(savedCode, true); }
+    });
+  }, [loadGame]);
 
-  function submit(event: FormEvent) {
+  const currentGameCode = game?.code;
+  useEffect(() => {
+    if (!currentGameCode) return;
+    const timer = window.setInterval(() => void loadGame(currentGameCode, true), 2000);
+    return () => window.clearInterval(timer);
+  }, [currentGameCode, loadGame]);
+
+  async function createGame() {
+    setBusy(true); setMessage('Création de la ligne temporelle…');
+    try {
+      const response = await fetch('/api/games', { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? 'Création impossible.');
+      localStorage.setItem('bague-game-code', data.code);
+      localStorage.setItem('bague-gm-token', data.gmToken);
+      setGmToken(data.gmToken); setGame(data); setJoinCode(data.code); setTab('cadenas');
+      setMessage('Partie créée. Partagez le code aux deux équipes.');
+    } catch (error) { setMessage(error instanceof Error ? error.message : 'Erreur inconnue.'); }
+    finally { setBusy(false); }
+  }
+
+  async function joinGame(event: FormEvent) {
     event.preventDefault();
-    if (code.length !== 4) {
-      setMessage('Le sceau attend exactement quatre chiffres.');
-      return;
+    const normalized = joinCode.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+    if (normalized.length !== 6) { setMessage('Le code de partie contient six caractères.'); return; }
+    setBusy(true);
+    const joined = await loadGame(normalized);
+    if (joined) {
+      localStorage.setItem('bague-game-code', normalized);
+      setGmToken(''); localStorage.removeItem('bague-gm-token');
     }
-    const accepted = stage === 1 ? VALID_CODES.lock1.includes(code) : VALID_CODES.lock2.includes(code);
-    setAttempts((value) => value + 1);
-    if (!accepted) {
-      setMessage('Combinaison refusée. La boucle tient encore — réessayez.');
-      setCode('');
-      return;
-    }
-    const nextStage = (stage + 1) as Stage;
-    localStorage.setItem('bague-stage', String(nextStage));
-    setStage(nextStage);
-    setCode('');
-    setMessage('');
-    setAttempts(0);
+    setBusy(false);
   }
 
-  function resetGame() {
-    localStorage.removeItem('bague-stage');
-    setStage(1);
-    setCode('');
-    setMessage('La boucle a été réinitialisée.');
-    setAttempts(0);
+  async function action(body: Record<string, string>) {
+    if (!game) return;
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/games/${game.code}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? 'Action refusée.');
+      setGame(data); setCode(''); setMessage(data.message ?? 'État synchronisé.');
+    } catch (error) { setMessage(error instanceof Error ? error.message : 'Erreur inconnue.'); }
+    finally { setBusy(false); }
   }
 
-  if (stage === 3) {
-    return <main className="app-shell"><section className="success-card" aria-live="polite">
-      <div className="card-name"><span>Restauration du continuum</span><span className="mana-row"><i className="mana sun">✦</i><i className="mana arcane">◈</i></span></div>
-      <div className="sigil complete" aria-hidden="true">✦</div>
-      <p className="eyebrow">Convergence restaurée</p>
-      <h1>L’étape suivante est déverrouillée</h1>
-      <p>Les deux sceaux ont reconnu vos combinaisons. Le passage temporel est désormais stable.</p>
-      <div className="success-code">PASSAGE OUVERT</div>
-      <button className="reset-button" onClick={resetGame}>Recommencer la partie</button>
-    </section></main>;
+  function leaveGame() {
+    localStorage.removeItem('bague-game-code'); localStorage.removeItem('bague-gm-token');
+    setGame(null); setGmToken(''); setJoinCode(''); setMessage('');
   }
 
-  return <main className="app-shell"><section className="lock-card">
-    <div className="card-name"><span>{stage === 1 ? 'Sceau de la mémoire' : 'Sceau de la convergence'}</span><span className="mana-row" aria-hidden="true"><i className="mana void">◇</i><i className={`mana ${stage === 1 ? 'arcane' : 'ember'}`}>{stage === 1 ? '◈' : '✹'}</i></span></div>
-    <header><p className="eyebrow">Artefact temporel légendaire</p><div className="progress" aria-label={`Étape ${stage} sur 2`}><span className="active">I</span><i /><span className={stage === 2 ? 'active' : ''}>II</span></div></header>
-    <div className="art-frame"><div className={`sigil ${stage === 2 ? 'second' : ''}`} aria-hidden="true"><span>{stage === 1 ? 'I' : 'II'}</span></div><div className="time-rings" /></div>
-    <div className="copy"><p className="step-label">Cadenas {stage}</p><h1>{stage === 1 ? 'Le sceau de la mémoire' : 'Le sceau de la convergence'}</h1><p>Saisissez la combinaison à quatre chiffres révélée par votre enquête.</p></div>
-    <form onSubmit={submit}>
-      <label htmlFor="code">Combinaison</label>
-      <input ref={inputRef} id="code" value={code} onChange={(event) => { setCode(event.target.value.replace(/\D/g, '').slice(0, 4)); setMessage(''); }} inputMode="numeric" pattern="[0-9]*" autoComplete="off" placeholder="0000" aria-describedby="feedback" />
-      <button type="submit" disabled={code.length !== 4}>Tenter la combinaison</button>
-    </form>
-    <p id="feedback" className={`feedback ${message ? 'visible' : ''}`} aria-live="polite">{message || 'Vous pouvez faire autant d’essais que nécessaire.'}</p>
-    {attempts > 0 && <p className="attempts">Essais sur ce cadenas : {attempts}</p>}
-    <footer className="card-footer"><span>« Le temps cède à ceux qui comprennent son langage. »</span><b>Ⅰ / Ⅱ</b></footer>
+  if (!game) return <main className="app-shell"><section className="portal-card">
+    <p className="eyebrow">Registre des lignes temporelles</p><h1>La Bague hors du Temps</h1>
+    <p>Créez une partie sur l’appareil du maître du jeu, puis rejoignez-la sur chaque appareil avec le même code.</p>
+    <button className="primary" onClick={createGame} disabled={busy}>Créer une partie</button>
+    <div className="divider"><span>ou</span></div>
+    <form onSubmit={joinGame} className="join-form"><label htmlFor="game-code">Code de partie</label>
+      <input id="game-code" className="session-input" value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))} placeholder="ABC123" />
+      <button disabled={busy || joinCode.length !== 6}>Rejoindre</button></form>
+    <p className="feedback visible" aria-live="polite">{message}</p>
+  </section></main>;
+
+  return <main className="app-shell"><section className="game-frame">
+    <header className="topbar"><div><p className="eyebrow">Ligne temporelle</p><strong>{game.code}</strong></div><div className="sync"><i /> Synchronisée</div></header>
+    <nav className="tabs" aria-label="Navigation">
+      <button className={tab === 'cadenas' ? 'active' : ''} onClick={() => setTab('cadenas')}>Cadenas</button>
+      <button className={tab === 'enquete' ? 'active' : ''} onClick={() => setTab('enquete')}>Enquête</button>
+      <button className={tab === 'chronologie' ? 'active' : ''} onClick={() => setTab('chronologie')}>Chronologie</button>
+      {gmToken && <button className={tab === 'mj' ? 'active' : ''} onClick={() => setTab('mj')}>MJ</button>}
+    </nav>
+    {tab === 'cadenas' && <div className="panel">
+      {game.stage === 3 ? <div className="victory"><div className="sigil complete">✦</div><p className="eyebrow">Continuum restauré</p><h1>Le passage est ouvert</h1><p>Les deux sceaux ont été déverrouillés sur tous les appareils.</p></div> : <>
+        <div className="progress"><span className="active">I</span><i/><span className={game.stage === 2 ? 'active' : ''}>II</span></div>
+        <div className={`sigil ${game.stage === 2 ? 'second' : ''}`}><span>{game.stage === 1 ? 'I' : 'II'}</span></div>
+        <div className="copy"><p className="step-label">Cadenas {game.stage}</p><h1>{game.stage === 1 ? 'Sceau de la mémoire' : 'Sceau de la convergence'}</h1><p>Saisissez la combinaison à quatre chiffres révélée par l’enquête.</p></div>
+        <form onSubmit={e => { e.preventDefault(); void action({ action: 'submit', code }); }}><label htmlFor="lock-code">Combinaison</label>
+          <input id="lock-code" value={code} onChange={e => { setCode(e.target.value.replace(/\D/g, '').slice(0, 4)); setMessage(''); }} inputMode="numeric" placeholder="0000" />
+          <button disabled={busy || code.length !== 4}>Tenter la combinaison</button></form>
+        <p className={`feedback ${message ? 'visible' : ''}`}>{message || 'Essais illimités — la progression est partagée.'}</p><p className="attempts">Essais de la partie : {game.attempts}</p>
+      </>}
+    </div>}
+    {tab === 'enquete' && <div className="panel documents"><p className="eyebrow">Archives récupérées</p><h1>Dossier d’enquête</h1>{DOCUMENTS.map(doc => <article key={doc.title} className={game.stage >= doc.stage ? '' : 'locked'}><span>Lot {doc.stage}</span><h2>{game.stage >= doc.stage ? doc.title : 'Document verrouillé'}</h2><p>{game.stage >= doc.stage ? doc.body : 'Stabilisez le prochain sceau pour récupérer cette archive.'}</p></article>)}</div>}
+    {tab === 'chronologie' && <div className="panel timeline"><p className="eyebrow">État partagé</p><h1>Chronologie</h1><ol><li className="done"><b>Connexion établie</b><span>Les voyageurs ont rejoint la même ligne.</span></li><li className={game.stage >= 2 ? 'done' : ''}><b>Sceau de la mémoire</b><span>{game.stage >= 2 ? 'Stabilisé.' : 'En attente de combinaison.'}</span></li><li className={game.stage >= 3 ? 'done' : ''}><b>Sceau de la convergence</b><span>{game.stage >= 3 ? 'Stabilisé.' : 'Verrouillé.'}</span></li></ol></div>}
+    {tab === 'mj' && gmToken && <div className="panel gm-panel"><p className="eyebrow">Console du chronomancien</p><h1>Contrôle MJ</h1><p>Ces commandes modifient tous les appareils.</p><div className="gm-actions"><button onClick={() => action({ action: 'advance', gmToken })} disabled={busy || game.stage === 3}>Débloquer l’étape suivante</button><button className="danger" onClick={() => action({ action: 'reset', gmToken })} disabled={busy}>Réinitialiser la partie</button></div></div>}
+    <footer className="game-footer"><span>Dernière évolution : {new Date(game.updatedAt).toLocaleTimeString('fr-FR')}</span><button onClick={leaveGame}>Quitter</button></footer>
   </section></main>;
 }
