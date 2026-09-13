@@ -13,7 +13,6 @@
 
 # next.js
 /.next/
-/.vinext/
 /out/
 
 # misc
@@ -29,12 +28,9 @@ yarn-error.log*
 # local environment
 .env*
 
-# deployment and generated files
+# Vercel and generated files
 .vercel
 next-env.d.ts
-/dist/
 /.wrangler/
-/outputs/
-/work/
 
 site-package*.tar.gz
