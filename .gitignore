@@ -7,6 +7,7 @@ site-package*.tar.gz
 /tmp/pdf-deps/
 **/__pycache__/
 *.tsbuildinfo
+/mini-app-cadenas/public/pdfjs/
 
 # Local credentials
 .env*
