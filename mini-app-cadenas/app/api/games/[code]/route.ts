@@ -38,6 +38,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ c
     if (body.action === 'submit') {
       if (stage === 3) return NextResponse.json({ ...publicGame(game), accepted: false });
       if (typeof body.code !== 'string' || !/^\d{4}$/.test(body.code)) return NextResponse.json({ error: 'La combinaison doit contenir quatre chiffres.' }, { status: 400 });
+      if (stage === 2 && !acceptAnyCode) return NextResponse.json({ error: 'Ce cadenas s’ouvre en scannant le dragon violet.' }, { status: 400 });
       attempts++;
       if (!acceptAnyCode && !LOCKS[stage - 1].includes(body.code)) {
         const failed = await update(game.code, { attempts });

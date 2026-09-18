@@ -5,6 +5,40 @@ import ts from 'typescript';
 import { createRequire } from 'node:module';
 const resolveModule = createRequire(import.meta.url);
 
+test('final accusation checks the dossier culprit and report remains gated by both locks', async () => {
+  let stage = 1;
+  let exists = true;
+  const dependencies = {
+    '@/lib/suspects': load('lib/suspects.ts', {}),
+    '@/lib/supabase': { databaseConfigured: () => true, db: async () => Response.json(exists ? [{ stage }] : []) },
+  };
+  const accuse = load('app/api/games/[code]/accuse/route.ts', dependencies);
+  const report = load('app/api/games/[code]/report/route.ts', dependencies);
+  const context = { params: Promise.resolve({ code: 'ABC123' }) };
+  const guess = id => accuse.POST(new Request('http://localhost', { method: 'POST', body: JSON.stringify({ suspectId: id }) }), context);
+  for (stage of [1, 2]) {
+    assert.equal((await guess('kern')).status, 403);
+    assert.equal((await report.GET(new Request('http://localhost'), context)).status, 403);
+  }
+  stage = 3;
+  for (const suspect of dependencies['@/lib/suspects'].SUSPECTS) {
+    const response = await guess(suspect.id);
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).correct, suspect.id === 'kern');
+  }
+  assert.equal((await guess('unknown')).status, 400);
+  const pdf = await report.GET(new Request('http://localhost'), context);
+  assert.equal(pdf.status, 200);
+  assert.equal(pdf.headers.get('content-disposition'), 'inline; filename="rapport-enquete.pdf"');
+  const bytes = Buffer.from(await pdf.arrayBuffer());
+  assert.equal(bytes.subarray(0, 5).toString(), '%PDF-');
+  assert.equal(bytes.length, fs.statSync('resolution-documents/rapport-enquete.pdf').size);
+  stage = 1;
+  assert.equal((await report.GET(new Request('http://localhost'), context)).status, 403);
+  exists = false;
+  assert.equal((await guess('kern')).status, 404);
+});
+
 function load(path, dependencies) {
   const code = ts.transpileModule(fs.readFileSync(path, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
@@ -13,6 +47,51 @@ function load(path, dependencies) {
   new Function('require', 'exports', code)(name => dependencies[name] ?? resolveModule(name), exports);
   return exports;
 }
+
+test('suspect selection requires confirmation and both endings open the report inside the app', async () => {
+  const originalFetch = global.fetch;
+  const suspects = load('lib/suspects.ts', {});
+  function nodes(node) {
+    if (!node || typeof node !== 'object') return [];
+    return [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)];
+  }
+  try {
+    for (const correct of [true, false]) {
+      const states = ['', null, false, '', false];
+      let index = 0;
+      let requests = 0;
+      const component = load('app/components/Accusation.tsx', {
+        '@/lib/suspects': suspects,
+        react: { useState: value => { const i = index++; return [states[i] ?? value, next => { states[i] = next; }]; } },
+      }).default;
+      const render = () => { index = 0; return component({ gameCode: 'ABC123' }); };
+      let tree = render();
+      assert.equal(nodes(tree).find(node => node.type === 'button').props.disabled, true);
+      const choice = correct ? 'kern' : 'saran';
+      nodes(tree).find(node => node.type === 'input' && node.props.value === choice).props.onChange();
+      global.fetch = async (url, init) => {
+        requests++;
+        assert.equal(url, '/api/games/ABC123/accuse');
+        assert.equal(JSON.parse(init.body).suspectId, choice);
+        return Response.json({ correct, suspectId: choice });
+      };
+      tree = render();
+      assert.equal(requests, 0);
+      await nodes(tree).find(node => node.type === 'button').props.onClick();
+      assert.equal(requests, 1);
+      tree = render();
+      assert.ok(nodes(tree).some(node => node.props?.src === '/images/anneau.svg'));
+      const text = nodes(tree).filter(node => node.type === 'p').map(node => JSON.stringify(node.props.children)).join(' ');
+      if (!correct) {
+        assert.ok(text.includes('21 h 16'));
+        assert.ok(text.includes('équipe indépendante du futur'));
+      } else assert.equal(nodes(tree).find(node => node.type === 'h1').props.children, 'Félicitations !');
+      nodes(tree).find(node => node.type === 'button').props.onClick();
+      tree = render();
+      assert.equal(nodes(tree).find(node => node.type === 'iframe').props.src, '/api/games/ABC123/report#view=FitH');
+    }
+  } finally { global.fetch = originalFetch; }
+});
 
 test('investigation batches contain all expected PDFs without the solution report', () => {
   const { ENQUETE_BATCHES: batches } = load('lib/enquete.ts', {});
@@ -120,7 +199,7 @@ test('submitting device shows success and ignores a poll started before submissi
     useCallback: fn => { callbacks.push(fn); return fn; },
     useEffect: () => {},
   };
-  const home = load('app/page.tsx', { react, '@/lib/enquete': load('lib/enquete.ts', {}) });
+  const home = load('app/page.tsx', { react, '@/lib/enquete': load('lib/enquete.ts', {}), '@/app/components/Accusation': { default: () => null }, '@/app/components/DragonScanner': { default: () => null } });
   const tree = home.default();
   const [applyGame, loadGame] = callbacks;
   applyGame(initial);
@@ -156,4 +235,49 @@ test('submitting device shows success and ignores a poll started before submissi
   } finally {
     global.fetch = originalFetch;
   }
+});
+
+test('a recognized photo directly triggers the second unlock animation on the submitting device', async () => {
+  const initial = { code: 'ABC123', stage: 2, attempts: 0, acceptAnyCode: false, updatedAt: '2026-09-18T10:00:00Z' };
+  const states = [initial, '', '', '', 'cadenas', '', false, null];
+  let index = 0;
+  const callbacks = [];
+  const react = {
+    useState: value => {
+      const i = index++;
+      if (!(i in states)) states[i] = value;
+      return [states[i], next => { states[i] = next; }];
+    },
+    useRef: value => ({ current: value }),
+    useCallback: fn => { callbacks.push(fn); return fn; },
+    useEffect: () => {},
+  };
+  const Scanner = () => null;
+  const home = load('app/page.tsx', { react, '@/lib/enquete': load('lib/enquete.ts', {}), '@/app/components/Accusation': { default: () => null }, '@/app/components/DragonScanner': { default: Scanner } });
+  const tree = home.default();
+  callbacks[0](initial);
+  function findScanner(node) {
+    if (!node || typeof node !== 'object') return null;
+    if (node.type === Scanner) return node;
+    for (const child of [node.props?.children].flat(Infinity)) {
+      const result = findScanner(child);
+      if (result) return result;
+    }
+    return null;
+  }
+  const originalFetch = global.fetch;
+  global.fetch = async (url, init) => {
+    assert.equal(url, '/api/games/ABC123/scan');
+    assert.equal(init.method, 'POST');
+    assert.ok(init.body instanceof FormData);
+    return Response.json({ ...initial, stage: 3, attempts: 1, updatedAt: '2026-09-18T10:00:01Z', accepted: true, unlockedStage: 2 });
+  };
+  try {
+    const form = new FormData(); form.append('photo', new Blob(['photo'], { type: 'image/jpeg' }), 'dragon.jpg');
+    await findScanner(tree).props.onScan(form);
+    assert.equal(states[0].stage, 3);
+    assert.equal(states[7], 2);
+    assert.equal(states[4], 'cadenas');
+    assert.equal(states[6], false);
+  } finally { global.fetch = originalFetch; }
 });
