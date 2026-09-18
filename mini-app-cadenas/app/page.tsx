@@ -20,6 +20,8 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [unlockedStage, setUnlockedStage] = useState<1 | 2 | null>(null);
   const latestGame = useRef<Game | null>(null);
+  const actionPending = useRef(false);
+  const syncGeneration = useRef(0);
 
   const applyGame = useCallback((next: Game) => {
     const previous = latestGame.current;
@@ -42,10 +44,14 @@ export default function Home() {
   }, [unlockedStage]);
 
   const loadGame = useCallback(async (sessionCode: string, silent = false) => {
+    if (actionPending.current) return false;
+    const generation = syncGeneration.current;
     try {
       const response = await fetch(`/api/games/${sessionCode}`, { cache: 'no-store' });
       if (!response.ok) throw new Error(response.status === 404 ? 'Partie introuvable.' : 'Synchronisation impossible.');
-      applyGame(await response.json() as Game);
+      const data = await response.json() as Game;
+      if (actionPending.current || generation !== syncGeneration.current) return false;
+      applyGame(data);
       if (!silent) setMessage('Partie synchronisée.');
       return true;
     } catch (error) {
@@ -97,20 +103,28 @@ export default function Home() {
   }
 
   async function action(body: Record<string, string | boolean>) {
-    if (!game || busy || unlockedStage !== null) return;
+    if (!game || busy || actionPending.current || unlockedStage !== null) return;
+    actionPending.current = true;
+    syncGeneration.current++;
     setBusy(true);
     try {
       const response = await fetch(`/api/games/${game.code}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'Action refusée.');
-      applyGame(data); setCode(''); setMessage(data.message ?? 'État synchronisé.');
+      applyGame(data);
+      if (body.action === 'submit' && data.accepted === true && (data.unlockedStage === 1 || data.unlockedStage === 2)) {
+        setUnlockedStage(data.unlockedStage);
+        setTab('cadenas');
+      }
+      setCode(''); setMessage(data.message ?? 'État synchronisé.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Erreur inconnue.'); }
-    finally { setBusy(false); }
+    finally { actionPending.current = false; setBusy(false); }
   }
 
   function leaveGame() {
     localStorage.removeItem('bague-game-code'); localStorage.removeItem('bague-gm-token');
     latestGame.current = null;
+    syncGeneration.current++;
     setGame(null); setGmToken(''); setJoinCode(''); setMessage(''); setUnlockedStage(null);
   }
 

@@ -36,12 +36,12 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ c
     let acceptAnyCode = game.accept_any_code ?? false;
     let message = '';
     if (body.action === 'submit') {
-      if (stage === 3) return NextResponse.json(publicGame(game));
+      if (stage === 3) return NextResponse.json({ ...publicGame(game), accepted: false });
       if (typeof body.code !== 'string' || !/^\d{4}$/.test(body.code)) return NextResponse.json({ error: 'La combinaison doit contenir quatre chiffres.' }, { status: 400 });
       attempts++;
       if (!acceptAnyCode && !LOCKS[stage - 1].includes(body.code)) {
         const failed = await update(game.code, { attempts });
-        return NextResponse.json({ ...publicGame(failed), message: 'Combinaison refusée. La boucle tient encore.' });
+        return NextResponse.json({ ...publicGame(failed), accepted: false, message: 'Combinaison refusée. La boucle tient encore.' });
       }
       stage = (stage + 1) as 2 | 3;
       message = stage === 3 ? 'Le continuum est restauré.' : 'Sceau déverrouillé sur tous les appareils.';
@@ -57,7 +57,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ c
       else return NextResponse.json({ error: 'Action inconnue.' }, { status: 400 });
     }
     const updated = await update(game.code, { stage, attempts, ...(body.action === 'reset' ? { accept_any_code: acceptAnyCode } : {}) });
-    return NextResponse.json({ ...publicGame(updated), message });
+    return NextResponse.json({ ...publicGame(updated), message, ...(body.action === 'submit' ? { accepted: true, unlockedStage: game.stage } : {}) });
   } catch { return NextResponse.json({ error: 'Impossible de modifier la partie.' }, { status: 500 }); }
 }
 
