@@ -39,7 +39,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ c
       if (stage === 3) return NextResponse.json(publicGame(game));
       if (typeof body.code !== 'string' || !/^\d{4}$/.test(body.code)) return NextResponse.json({ error: 'La combinaison doit contenir quatre chiffres.' }, { status: 400 });
       attempts++;
-      if (!acceptAnyCode && !LOCKS[stage - 1].includes(body.code)) {
+      if (acceptAnyCode) {
+        const accepted = await update(game.code, { attempts });
+        return NextResponse.json({ ...publicGame(accepted), message: 'Combinaison valide.' });
+      }
+      if (!LOCKS[stage - 1].includes(body.code)) {
         const failed = await update(game.code, { attempts });
         return NextResponse.json({ ...publicGame(failed), message: 'Combinaison refusée. La boucle tient encore.' });
       }
