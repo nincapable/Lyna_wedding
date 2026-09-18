@@ -12,4 +12,7 @@ alter table public.game_sessions enable row level security;
 alter table public.game_sessions
   add column if not exists accept_any_code boolean not null default false;
 
+alter table public.game_sessions
+  add column if not exists bypass_dragon boolean not null default false;
+
 -- Aucun accès public : seule l’API serveur utilise la service role.
