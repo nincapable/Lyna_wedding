@@ -1,2 +1,13 @@
 
 site-package*.tar.gz
+
+# Local dependencies and generated caches
+/.tmp/
+/.uv-cache/
+/tmp/pdf-deps/
+**/__pycache__/
+*.tsbuildinfo
+
+# Local credentials
+.env*
+!.env.example
