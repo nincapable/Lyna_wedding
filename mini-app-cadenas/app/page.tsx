@@ -22,8 +22,8 @@ export default function Home() {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
   const activeDocument = ENQUETE_BATCHES
     .filter(batch => game && game.stage >= batch.stage)
-    .flatMap(batch => batch.documents)
-    .find(doc => doc.id === selectedDocument);
+    .map(batch => batch.documents.find(doc => doc.id === selectedDocument))
+    .find(doc => doc !== undefined);
 
   const applyGame = useCallback((next: Game) => {
     const previous = latestGame.current;
