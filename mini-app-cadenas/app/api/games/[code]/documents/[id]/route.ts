@@ -18,7 +18,7 @@ export async function GET(_: NextRequest, context: { params: Promise<{ code: str
     if (!response.ok) throw new Error('DB_ERROR');
     const [game] = await response.json() as { stage: number }[];
     if (!game) return NextResponse.json({ error: 'Partie introuvable.' }, { status: 404 });
-    if (game.stage < batch.stage) return NextResponse.json({ error: `Déverrouillez le cadenas ${batch.number} pour accéder à ce batch.` }, { status: 403 });
+    if (game.stage < batch.stage) return NextResponse.json({ error: `Déverrouillez le cadenas ${batch.number} pour accéder à cet engramme.` }, { status: 403 });
     const file = await open(join(process.cwd(), 'enquete-documents', document.file), 'r');
     const stream = Readable.toWeb(file.createReadStream()) as ReadableStream<Uint8Array>;
     return new NextResponse(stream, { headers: {

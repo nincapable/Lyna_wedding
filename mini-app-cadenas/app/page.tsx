@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { ENQUETE_BATCHES } from '@/lib/enquete';
 
 type Game = { code: string; stage: 1 | 2 | 3; attempts: number; updatedAt: string; acceptAnyCode: boolean };
-type Tab = 'cadenas' | 'enquete' | 'chronologie' | 'mj';
+type Tab = 'cadenas' | 'enquete' | 'mj';
 
 export default function Home() {
   const [game, setGame] = useState<Game | null>(null);
@@ -148,7 +148,6 @@ export default function Home() {
     <nav className="tabs" aria-label="Navigation">
       <button className={tab === 'cadenas' ? 'active' : ''} onClick={() => setTab('cadenas')}>Cadenas</button>
       <button className={tab === 'enquete' ? 'active' : ''} onClick={() => setTab('enquete')}>Enquête</button>
-      <button className={tab === 'chronologie' ? 'active' : ''} onClick={() => setTab('chronologie')}>Chronologie</button>
       {gmToken && <button className={tab === 'mj' ? 'active' : ''} onClick={() => setTab('mj')}>MJ</button>}
     </nav>
     {tab === 'cadenas' && <div className="panel">
@@ -163,8 +162,8 @@ export default function Home() {
         </div>
         <p className="eyebrow">Combinaison validée</p>
         <h1>Rapports d’enquête déverrouillés</h1>
-        <p>Le batch {unlockedStage} est disponible dans l’onglet Enquête.</p>
-      </div> : game.stage === 3 ? <div className="victory"><div className="sigil complete">✦</div><p className="eyebrow">Continuum restauré</p><h1>Le passage est ouvert</h1><p>Les deux batches de rapports d’enquête sont accessibles sur tous les appareils.</p></div> : <>
+        <p>L’engramme {unlockedStage} est disponible dans l’onglet Enquête.</p>
+      </div> : game.stage === 3 ? <div className="victory"><div className="sigil complete">✦</div><p className="eyebrow">Continuum restauré</p><h1>Le passage est ouvert</h1><p>Les deux engrammes de rapports d’enquête sont accessibles sur tous les appareils.</p></div> : <>
         <div className="progress crystal-progress" aria-label={`Rapports d’enquête : ${game.stage === 1 ? '36' : '500'}`}>
           <span className="active"><Image src="/images/cristal-36.png" alt="36" width={82} height={48} /></span><i/>
           <span className={game.stage === 2 ? 'active' : ''}><Image src="/images/cristal-500.png" alt="500" width={82} height={48} /></span>
@@ -176,7 +175,7 @@ export default function Home() {
         <form onSubmit={e => { e.preventDefault(); void action({ action: 'submit', code }); }}><label htmlFor="lock-code">Combinaison</label>
           <input id="lock-code" value={code} onChange={e => { setCode(e.target.value.replace(/\D/g, '').slice(0, 4)); setMessage(''); }} inputMode="numeric" placeholder="0000" />
           <button disabled={busy || code.length !== 4}>Tenter la combinaison</button></form>
-        <p className={`feedback ${message ? 'visible' : ''}`}>{message || 'Essais illimités — la progression est partagée.'}</p><p className="attempts">Essais de la partie : {game.attempts}</p>
+        <p className={`feedback ${message ? 'visible' : ''}`}>{message || 'Essais illimités — la progression est partagée.'}</p><p className="attempts">Essais illimités — aucune limite de tentatives.<br />Essais de la partie : {game.attempts}</p>
       </>}
     </div>}
     {tab === 'enquete' && <div className="panel documents"><p className="eyebrow">Archives récupérées</p><h1>Dossier d’enquête</h1>
@@ -185,11 +184,10 @@ export default function Home() {
         <h2>{activeDocument.title}</h2>
         <iframe key={activeDocument.id} src={`/api/games/${game.code}/documents/${activeDocument.id}#view=FitH`} title={activeDocument.title} className="document-frame" />
       </section> : ENQUETE_BATCHES.map(batch => <section className="document-batch" key={batch.number} aria-labelledby={`batch-${batch.number}`}>
-        <div className="batch-heading"><h2 id={`batch-${batch.number}`}>Batch {batch.number}</h2><span>{game.stage >= batch.stage ? `${batch.documents.length} documents disponibles` : 'Verrouillé'}</span></div>
+        <div className="batch-heading"><h2 id={`batch-${batch.number}`}>Engramme {batch.number}</h2><span>{game.stage >= batch.stage ? `${batch.documents.length} documents disponibles` : 'Verrouillé'}</span></div>
         {game.stage >= batch.stage ? batch.documents.map(doc => <article key={doc.id}><h3>{doc.title}</h3><button type="button" className="document-open" onClick={() => setSelectedDocument(doc.id)} aria-label={`Consulter : ${doc.title}`}>Consulter le document</button></article>) : <p className="batch-locked">Déverrouillez le cadenas {batch.number} pour accéder à ces {batch.documents.length} documents.</p>}
       </section>)}
     </div>}
-    {tab === 'chronologie' && <div className="panel timeline"><p className="eyebrow">État partagé</p><h1>Chronologie</h1><ol><li className="done"><b>Connexion établie</b><span>Les voyageurs ont rejoint la même ligne.</span></li><li className={game.stage >= 2 ? 'done' : ''}><b>Rapports d’enquête — batch 1</b><span>{game.stage >= 2 ? 'Stabilisé.' : 'En attente de combinaison.'}</span></li><li className={game.stage >= 3 ? 'done' : ''}><b>Rapports d’enquête — batch 2</b><span>{game.stage >= 3 ? 'Stabilisé.' : 'Verrouillé.'}</span></li></ol></div>}
     {tab === 'mj' && gmToken && <div className="panel gm-panel"><p className="eyebrow">Console du chronomancien</p><h1>Contrôle MJ</h1><p>Ces commandes modifient tous les appareils.</p><div className="kill-switch"><h2>Kill switch des cadenas</h2><p>{game.acceptAnyCode ? 'Activé : toute combinaison de quatre chiffres saisie par les joueurs est valide et passe à l’étape suivante.' : 'Désactivé : seules les bonnes combinaisons ouvrent les cadenas.'}</p><button type="button" role="switch" aria-checked={game.acceptAnyCode} onClick={() => action({ action: 'set-bypass', gmToken, enabled: !game.acceptAnyCode })} disabled={busy}>{game.acceptAnyCode ? 'Désactiver le kill switch' : 'Activer le kill switch'}</button><p>Activer ce réglage ne change pas l’étape : les joueurs doivent saisir une combinaison. Réinitialiser la partie le désactive.</p></div><div className="gm-actions"><button onClick={() => action({ action: 'advance', gmToken })} disabled={busy || game.stage === 3}>Débloquer l’étape suivante</button><button className="danger" onClick={() => action({ action: 'reset', gmToken })} disabled={busy}>Réinitialiser la partie</button></div></div>}
     <footer className="game-footer"><span>Dernière évolution : {new Date(game.updatedAt).toLocaleTimeString('fr-FR')}</span><button onClick={leaveGame}>Quitter</button></footer>
   </section></main>;
