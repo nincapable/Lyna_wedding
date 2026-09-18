@@ -6,7 +6,7 @@ import { ENQUETE_BATCHES } from '@/lib/enquete';
 import DragonScanner from '@/app/components/DragonScanner';
 import Accusation from '@/app/components/Accusation';
 
-type Game = { code: string; stage: 1 | 2 | 3; attempts: number; updatedAt: string; acceptAnyCode: boolean };
+type Game = { code: string; stage: 1 | 2 | 3; attempts: number; updatedAt: string; acceptAnyCode: boolean; bypassDragon: boolean };
 type Tab = 'cadenas' | 'enquete' | 'accusation' | 'mj';
 
 export default function Home() {
@@ -23,7 +23,7 @@ export default function Home() {
   const syncGeneration = useRef(0);
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
   const [scanToken, setScanToken] = useState('');
-  const codeLocked = game?.stage === 2 && !scanToken && !game.acceptAnyCode;
+  const codeLocked = game?.stage === 2 && !scanToken && !game.bypassDragon;
   const activeDocument = ENQUETE_BATCHES
     .filter(batch => game && game.stage >= batch.stage)
     .map(batch => batch.documents.find(doc => doc.id === selectedDocument))
@@ -135,7 +135,7 @@ export default function Home() {
         setUnlockedStage(data.unlockedStage);
         setTab('cadenas');
       }
-      setCode(''); setMessage(!(body instanceof FormData) && body.action === 'set-bypass' ? 'Réglage MJ enregistré.' : data.message ?? 'État synchronisé.');
+      setCode(''); setMessage(!(body instanceof FormData) && ['set-bypass', 'set-dragon-bypass'].includes(body.action as string) ? 'Réglage MJ enregistré.' : data.message ?? 'État synchronisé.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Erreur inconnue.'); }
     finally { actionPending.current = false; setBusy(false); }
   }
@@ -207,7 +207,20 @@ export default function Home() {
         {game.stage >= batch.stage ? batch.documents.map(doc => <article key={doc.id}><h3>{doc.title}</h3><button type="button" className="document-open" onClick={() => setSelectedDocument(doc.id)} aria-label={`Consulter : ${doc.title}`}>Consulter le document</button></article>) : <p className="batch-locked">Déverrouillez le cadenas {batch.number} pour accéder à ces {batch.documents.length} documents.</p>}
       </section>)}
     </div>}
-    {tab === 'mj' && gmToken && <div className="panel gm-panel"><p className="eyebrow">Console du chronomancien</p><h1>Contrôle MJ</h1><p>Ces commandes modifient tous les appareils.</p><div className="kill-switch"><h2>Kill switch des cadenas</h2><p>{game.acceptAnyCode ? 'Activé : toute combinaison de quatre chiffres est valide. Pour le cadenas 2, toute photo vérifiée autorise la saisie du code.' : 'Désactivé : le premier cadenas demande la bonne combinaison et le second un scan du dragon reconstitué puis la bonne combinaison.'}</p><button type="button" role="switch" aria-checked={game.acceptAnyCode} onClick={() => action({ action: 'set-bypass', gmToken, enabled: !game.acceptAnyCode })} disabled={busy}>{game.acceptAnyCode ? 'Désactiver le kill switch' : 'Activer le kill switch'}</button><p>Activer ce réglage ne change pas l’étape. Le cadenas 2 autorise la saisie après un scan validé ou quand ce réglage est actif. Réinitialiser la partie désactive le réglage.</p></div><div className="gm-actions"><button onClick={() => action({ action: 'advance', gmToken })} disabled={busy || game.stage === 3}>Débloquer l’étape suivante</button><button className="danger" onClick={() => action({ action: 'reset', gmToken })} disabled={busy}>Réinitialiser la partie</button></div></div>}
+    {tab === 'mj' && gmToken && <div className="panel gm-panel">
+      <p className="eyebrow">Console du chronomancien</p><h1>Contrôle MJ</h1><p>Ces commandes modifient tous les appareils.</p>
+      <div className="kill-switch"><h2>Kill switch des codes</h2>
+        <p>{game.acceptAnyCode ? 'Activé : toute combinaison de quatre chiffres est valide.' : 'Désactivé : les combinaisons sont vérifiées.'}</p>
+        <button type="button" role="switch" aria-checked={game.acceptAnyCode} onClick={() => action({ action: 'set-bypass', gmToken, enabled: !game.acceptAnyCode })} disabled={busy}>{game.acceptAnyCode ? 'Désactiver le kill switch des codes' : 'Activer le kill switch des codes'}</button>
+        <p>Ce réglage ne valide pas le dragon et n’ouvre pas la saisie du cadenas 2.</p>
+      </div>
+      <div className="kill-switch"><h2>Kill switch du dragon</h2>
+        <p>{game.bypassDragon ? 'Activé : les sorts liés à l’engramme sont déchiffrés et la saisie du cadenas 2 est disponible.' : 'Désactivé : le dragon doit être reconnu avant de saisir le code du cadenas 2.'}</p>
+        <button type="button" role="switch" aria-checked={game.bypassDragon ?? false} onClick={() => action({ action: 'set-dragon-bypass', gmToken, enabled: !game.bypassDragon })} disabled={busy}>{game.bypassDragon ? 'Désactiver le kill switch du dragon' : 'Activer le kill switch du dragon'}</button>
+        <p>Ce réglage donne accès au code sans ouvrir le cadenas. Le code reste vérifié sauf si le kill switch des codes est aussi actif. Réinitialiser la partie désactive les deux réglages.</p>
+      </div>
+      <div className="gm-actions"><button onClick={() => action({ action: 'advance', gmToken })} disabled={busy || game.stage === 3}>Débloquer l’étape suivante</button><button className="danger" onClick={() => action({ action: 'reset', gmToken })} disabled={busy}>Réinitialiser la partie</button></div>
+    </div>}
     {game.stage === 3 && <div hidden={tab !== 'accusation'}><Accusation key={game.code} gameCode={game.code} /></div>}
     <footer className="game-footer"><span>Dernière évolution : {new Date(game.updatedAt).toLocaleTimeString('fr-FR')}</span><button onClick={leaveGame}>Quitter</button></footer>
   </section></main>;

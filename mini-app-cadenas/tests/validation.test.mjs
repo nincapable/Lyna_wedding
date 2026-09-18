@@ -270,6 +270,8 @@ test('a recognized photo authorizes code entry without opening the second lock',
   assert.equal(nodes(tree).some(node => node.props?.id === 'lock-code'), false);
   assert.equal(nodes(tree).some(node => node.type === 'form'), false);
   states[0] = { ...initial, acceptAnyCode: true }; index = 0;
+  assert.equal(nodes(home.default()).some(node => node.props?.id === 'lock-code'), false);
+  states[0] = { ...initial, bypassDragon: true }; index = 0;
   assert.equal(nodes(home.default()).find(node => node.props?.id === 'lock-code').props.disabled, false);
   states[0] = initial;
   callbacks[0](initial);

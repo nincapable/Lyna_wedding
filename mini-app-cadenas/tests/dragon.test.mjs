@@ -93,15 +93,17 @@ test('scan route enforces stage, server recognition, kill switch, attempts and c
   row.stage = 3;
   assert.equal((await post()).status, 409);
   row.stage = 2; recognized = false; row.accept_any_code = true;
+  assert.equal((await (await post()).json()).accepted, false);
+  row.bypass_dragon = true;
   const calls = recognitionCalls;
   assert.equal((await (await post()).json()).accepted, true); assert.equal(recognitionCalls, calls);
-  row.stage = 2; row.accept_any_code = false;
+  row.stage = 2; row.accept_any_code = false; row.bypass_dragon = false;
   assert.equal((await post(new Blob(['text'], { type: 'text/plain' }))).status, 400);
   concurrentChange = true;
   assert.equal((await post()).status, 409); assert.equal(row.stage, 2);
 });
 
-test('the second lock requires a valid scan or the active kill switch before code submission', async () => {
+test('dragon bypass and code bypass are independent and cannot advance the stage alone', async () => {
   const row = { code: 'ABC123', stage: 2, attempts: 0, accept_any_code: false, gm_token: 'secret', updated_at: '2026-09-18T10:00:00Z' };
   const route = loadRoute('app/api/games/[code]/route.ts', {
     '@/lib/supabase': { databaseConfigured: () => true, db: async (_, init = {}) => {
@@ -111,9 +113,22 @@ test('the second lock requires a valid scan or the active kill switch before cod
   });
   const submit = (code, scanToken) => route.PATCH(new Request('http://localhost/api/games/ABC123', { method: 'PATCH', body: JSON.stringify({ action: 'submit', code, scanToken }) }), { params: Promise.resolve({ code: 'ABC123' }) });
   const proof = loadRoute('lib/scan-proof.ts', {});
+  const toggle = (action, enabled, gmToken = 'secret') => route.PATCH(new Request('http://localhost/api/games/ABC123', { method: 'PATCH', body: JSON.stringify({ action, enabled, gmToken }) }), { params: Promise.resolve({ code: 'ABC123' }) });
   assert.equal((await submit('2543')).status, 403);
   assert.equal((await submit('2543', 'forged')).status, 403);
   assert.equal(row.stage, 2);
+  assert.equal((await toggle('set-dragon-bypass', true, 'wrong')).status, 403);
+  assert.equal((await toggle('set-dragon-bypass', 'invalid')).status, 400);
+  await toggle('set-bypass', true);
+  assert.equal((await submit('2543')).status, 403);
+  assert.equal(row.stage, 2);
+  await toggle('set-bypass', false);
+  await toggle('set-dragon-bypass', true);
+  assert.equal(row.stage, 2);
+  assert.equal(row.accept_any_code, false);
+  assert.equal((await (await submit('0000')).json()).accepted, false);
+  assert.equal(row.stage, 2);
+  await toggle('set-dragon-bypass', false);
   row.accept_any_code = false;
   const oldProof = proof.scanProof(row);
   const wrong = await (await submit('0000', oldProof)).json();
@@ -124,5 +139,12 @@ test('the second lock requires a valid scan or the active kill switch before cod
   row.stage = 2; row.updated_at = '2026-09-18T11:00:00Z'; row.accept_any_code = false;
   assert.equal((await submit('0000', wrong.scanToken)).status, 403);
   row.accept_any_code = true;
+  assert.equal((await submit('0000')).status, 403);
+  await toggle('set-dragon-bypass', true);
   assert.equal((await (await submit('0000')).json()).accepted, true);
+  const reset = await route.PATCH(new Request('http://localhost', { method: 'PATCH', body: JSON.stringify({ action: 'reset', gmToken: 'secret' }) }), { params: Promise.resolve({ code: 'ABC123' }) });
+  assert.equal(reset.status, 200);
+  assert.equal(row.stage, 1);
+  assert.equal(row.accept_any_code, false);
+  assert.equal(row.bypass_dragon, false);
 });

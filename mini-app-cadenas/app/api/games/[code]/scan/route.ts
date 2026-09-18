@@ -6,8 +6,8 @@ import { scanProof } from '@/lib/scan-proof';
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
-type GameRow = { code: string; stage: number; attempts: number; accept_any_code: boolean; updated_at: string; gm_token: string };
-const publicGame = (game: GameRow) => ({ code: game.code, stage: game.stage, attempts: game.attempts, acceptAnyCode: game.accept_any_code ?? false, updatedAt: game.updated_at });
+type GameRow = { code: string; stage: number; attempts: number; accept_any_code: boolean; bypass_dragon: boolean; updated_at: string; gm_token: string };
+const publicGame = (game: GameRow) => ({ code: game.code, stage: game.stage, attempts: game.attempts, acceptAnyCode: game.accept_any_code ?? false, bypassDragon: game.bypass_dragon ?? false, updatedAt: game.updated_at });
 
 export async function POST(request: NextRequest, context: { params: Promise<{ code: string }> }) {
   if (!databaseConfigured()) return NextResponse.json({ error: 'Base non configurée.' }, { status: 503 });
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ co
     if (!(photo instanceof File) || !['image/jpeg', 'image/png', 'image/webp'].includes(photo.type) || photo.size === 0 || photo.size > 3_000_000) {
       return NextResponse.json({ error: 'Choisissez une photo JPEG, PNG ou WebP de moins de 3 Mo.' }, { status: 400 });
     }
-    let accepted = game.accept_any_code;
+    let accepted = game.bypass_dragon ?? false;
     let reason = 'match';
     if (!accepted) {
       try {
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ co
     }
     // Only the still-locked second stage may be modified by this scan.
     const response = await db(`game_sessions?code=eq.${encodeURIComponent(game.code)}&stage=eq.2&updated_at=eq.${encodeURIComponent(game.updated_at)}`, {
-      method: 'PATCH', body: JSON.stringify({ stage: 2, attempts: game.attempts + 1, updated_at: new Date().toISOString() }),
+      method: 'PATCH', body: JSON.stringify({ stage: 2, attempts: game.attempts + 1, updated_at: new Date(Math.max(Date.now(), Date.parse(game.updated_at) + 1)).toISOString() }),
     });
     if (!response.ok) throw new Error('DB_ERROR');
     const [updated] = await response.json() as GameRow[];

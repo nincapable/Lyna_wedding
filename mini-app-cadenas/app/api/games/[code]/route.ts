@@ -6,8 +6,8 @@ const LOCKS = [
   (process.env.LOCK_1_CODES ?? '3816,7482,1904,2631,5279').split(','),
   (process.env.LOCK_2_CODES ?? '2543,9062,4418,1357,6820').split(','),
 ];
-type Row = { code: string; stage: 1 | 2 | 3; attempts: number; updated_at: string; gm_token: string; accept_any_code: boolean };
-const publicGame = (row: Row) => ({ code: row.code, stage: row.stage, attempts: row.attempts, updatedAt: row.updated_at, acceptAnyCode: row.accept_any_code ?? false });
+type Row = { code: string; stage: 1 | 2 | 3; attempts: number; updated_at: string; gm_token: string; accept_any_code: boolean; bypass_dragon: boolean };
+const publicGame = (row: Row) => ({ code: row.code, stage: row.stage, attempts: row.attempts, updatedAt: row.updated_at, acceptAnyCode: row.accept_any_code ?? false, bypassDragon: row.bypass_dragon ?? false });
 
 async function findGame(code: string): Promise<Row | null> {
   const response = await db(`game_sessions?code=eq.${encodeURIComponent(code)}&select=*`);
@@ -39,7 +39,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ c
     if (body.action === 'submit') {
       if (stage === 3) return NextResponse.json({ ...publicGame(game), accepted: false });
       if (typeof body.code !== 'string' || !/^\d{4}$/.test(body.code)) return NextResponse.json({ error: 'La combinaison doit contenir quatre chiffres.' }, { status: 400 });
-      if (stage === 2 && !acceptAnyCode && !verifiedScan(game, body.scanToken)) return NextResponse.json({ error: 'Validez d’abord le scan du dragon violet avant de saisir le code.', scanRequired: true }, { status: 403 });
+      if (stage === 2 && !game.bypass_dragon && !verifiedScan(game, body.scanToken)) return NextResponse.json({ error: 'Validez d’abord le scan du dragon violet avant de saisir le code.', scanRequired: true }, { status: 403 });
       attempts++;
       if (!acceptAnyCode && !LOCKS[stage - 1].includes(body.code)) {
         const failed = await update(game.code, { attempts }, game.updated_at);
@@ -53,18 +53,24 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ c
       else if (body.action === 'reset') { stage = 1; attempts = 0; acceptAnyCode = false; message = 'La partie a été réinitialisée.'; }
       else if (body.action === 'set-bypass') {
         if (typeof body.enabled !== 'boolean') return NextResponse.json({ error: 'État du kill switch invalide.' }, { status: 400 });
-        const updated = await update(game.code, { accept_any_code: body.enabled });
+        const updated = await update(game.code, { accept_any_code: body.enabled }, game.updated_at);
         return NextResponse.json({ ...publicGame(updated), message: body.enabled ? 'Kill switch activé : toute combinaison de quatre chiffres sera acceptée.' : 'Kill switch désactivé : les combinaisons sont vérifiées.' });
+      }
+      else if (body.action === 'set-dragon-bypass') {
+        if (typeof body.enabled !== 'boolean') return NextResponse.json({ error: 'État du kill switch dragon invalide.' }, { status: 400 });
+        const updated = await update(game.code, { bypass_dragon: body.enabled }, game.updated_at);
+        return NextResponse.json({ ...publicGame(updated), message: 'Réglage du dragon enregistré.' });
       }
       else return NextResponse.json({ error: 'Action inconnue.' }, { status: 400 });
     }
-    const updated = await update(game.code, { stage, attempts, ...(body.action === 'reset' ? { accept_any_code: acceptAnyCode } : {}) }, game.updated_at);
+    const updated = await update(game.code, { stage, attempts, ...(body.action === 'reset' ? { accept_any_code: acceptAnyCode, bypass_dragon: false } : {}) }, game.updated_at);
     return NextResponse.json({ ...publicGame(updated), message, ...(body.action === 'submit' ? { accepted: true, unlockedStage: game.stage } : {}) });
   } catch { return NextResponse.json({ error: 'Impossible de modifier la partie.' }, { status: 500 }); }
 }
 
-async function update(code: string, values: { stage?: number; attempts?: number; accept_any_code?: boolean }, expectedVersion?: string): Promise<Row> {
-  const response = await db(`game_sessions?code=eq.${encodeURIComponent(code)}${expectedVersion ? `&updated_at=eq.${encodeURIComponent(expectedVersion)}` : ''}`, { method: 'PATCH', body: JSON.stringify({ ...values, updated_at: new Date().toISOString() }) });
+async function update(code: string, values: { stage?: number; attempts?: number; accept_any_code?: boolean; bypass_dragon?: boolean }, expectedVersion?: string): Promise<Row> {
+  const updatedAt = new Date(Math.max(Date.now(), expectedVersion ? Date.parse(expectedVersion) + 1 : 0)).toISOString();
+  const response = await db(`game_sessions?code=eq.${encodeURIComponent(code)}${expectedVersion ? `&updated_at=eq.${encodeURIComponent(expectedVersion)}` : ''}`, { method: 'PATCH', body: JSON.stringify({ ...values, updated_at: updatedAt }) });
   if (!response.ok) throw new Error('DB_ERROR');
   const [row] = await response.json() as Row[];
   if (!row) throw new Error('SESSION_CHANGED');

@@ -14,13 +14,13 @@ Le navigateur actualise l’état toutes les deux secondes. L’appareil qui cr�
 
 ## Kill switch MJ
 
-Pour une base existante, réexécuter `supabase.sql` dans SQL Editor pour ajouter `accept_any_code` sans supprimer les parties. Seul le MJ peut activer ou désactiver le kill switch. L’activer ne change pas l’étape. Lorsqu’il est actif, toute combinaison de quatre chiffres saisie par les joueurs est valide et fait passer à l’étape suivante, comme une bonne combinaison. Réinitialiser la partie désactive le kill switch.
+Pour une base existante, réexécuter `supabase.sql` dans SQL Editor pour ajouter `accept_any_code` et `bypass_dragon` sans supprimer les parties. Seul le MJ peut activer ou désactiver les deux interrupteurs indépendants. Le kill switch des codes rend toute combinaison de quatre chiffres valide mais ne déchiffre pas le dragon. Le kill switch du dragon rend la saisie du cadenas 2 disponible sur tous les appareils, sans ouvrir le cadenas ni accepter les mauvais codes. Aucun interrupteur ne change l’étape à lui seul. Réinitialiser la partie désactive les deux.
 
 ## Épreuve du dragon — cadenas 2
 
 Après le cadenas 1, les joueurs peuvent photographier le dessin assemblé ou choisir une photo, puis appuyer sur « Vérifier le dragon ». Le serveur compare uniquement les traits violets à `scan-reference/dragon.png` : points caractéristiques ORB, alignement par homographie et contrôle de couverture dans les différentes régions du dragon. Les fonds et textes des cartes sont ignorés ; les traits partiellement masqués par les chevauchements sont tolérés. Les positions et orientations des cartes doivent former le dessin.
 
-Une reconnaissance valide autorise la saisie du code du cadenas 2 sur l’appareil qui a scanné, sans changer l’étape. Une combinaison valide passe ensuite à l’étape 3, joue l’animation et débloque l’engramme 2 sur tous les appareils. Le champ et le bouton de combinaison sont entièrement masqués tant qu’aucun scan n’a réussi et que le kill switch est désactivé. Activer le kill switch fait apparaître la saisie, sans scan, et rend tout code à quatre chiffres valide. Les essais restent illimités. Le statut du kill switch est affiché uniquement dans la console MJ.
+Une reconnaissance valide autorise la saisie du code du cadenas 2 sur l’appareil qui a scanné, sans changer l’étape. Une combinaison valide passe ensuite à l’étape 3, joue l’animation et débloque l’engramme 2 sur tous les appareils. Le champ et le bouton de combinaison sont entièrement masqués tant qu’aucun scan n’a réussi et que le kill switch du dragon est désactivé. Activer le kill switch du dragon fait apparaître la saisie, sans scan. Seul le kill switch des codes rend tout code à quatre chiffres valide. Les essais restent illimités. Les statuts des interrupteurs sont affichés uniquement dans la console MJ.
 
 Le serveur signe une preuve du scan liée à la version de la partie, sans ajouter de colonne Supabase. Une erreur de combinaison renouvelle cette preuve pour permettre un nouvel essai. Un changement de la partie sur un autre appareil, une réinitialisation ou un rechargement de la page peut demander un nouveau scan.
 
