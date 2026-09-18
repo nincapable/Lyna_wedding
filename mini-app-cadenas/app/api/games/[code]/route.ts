@@ -44,7 +44,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ c
         return NextResponse.json({ ...publicGame(failed), accepted: false, message: 'Combinaison refusée. La boucle tient encore.' });
       }
       stage = (stage + 1) as 2 | 3;
-      message = stage === 3 ? 'Le continuum est restauré.' : 'Sceau déverrouillé sur tous les appareils.';
+      message = stage === 3 ? 'Le continuum est restauré.' : 'Rapports d’enquête déverrouillés sur tous les appareils.';
     } else {
       if (!body.gmToken || body.gmToken !== game.gm_token) return NextResponse.json({ error: 'Commande MJ non autorisée.' }, { status: 403 });
       if (body.action === 'advance') { stage = Math.min(3, stage + 1) as 1 | 2 | 3; message = 'Étape débloquée par le MJ.'; }
