@@ -1,6 +1,7 @@
  'use client';
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 
 type Game = { code: string; stage: 1 | 2 | 3; attempts: number; updatedAt: string; acceptAnyCode: boolean };
 type Tab = 'cadenas' | 'enquete' | 'chronologie' | 'mj';
@@ -158,11 +159,16 @@ export default function Home() {
           </svg>
         </div>
         <p className="eyebrow">Combinaison validée</p>
-        <h1>Sceau {unlockedStage === 1 ? 'I' : 'II'} déverrouillé</h1>
+        <h1>Sceau {unlockedStage === 1 ? '36' : '500'} déverrouillé</h1>
         <p>{unlockedStage === 2 ? 'Le continuum se restaure…' : 'Le prochain sceau se révèle…'}</p>
       </div> : game.stage === 3 ? <div className="victory"><div className="sigil complete">✦</div><p className="eyebrow">Continuum restauré</p><h1>Le passage est ouvert</h1><p>Les deux sceaux ont été déverrouillés sur tous les appareils.</p></div> : <>
-        <div className="progress"><span className="active">I</span><i/><span className={game.stage === 2 ? 'active' : ''}>II</span></div>
-        <div className={`sigil ${game.stage === 2 ? 'second' : ''}`}><span>{game.stage === 1 ? 'I' : 'II'}</span></div>
+        <div className="progress crystal-progress" aria-label={`Sceau en cours : ${game.stage === 1 ? '36' : '500'}`}>
+          <span className="active"><Image src="/images/cristal-36.png" alt="36" width={82} height={48} /></span><i/>
+          <span className={game.stage === 2 ? 'active' : ''}><Image src="/images/cristal-500.png" alt="500" width={82} height={48} /></span>
+        </div>
+        <div className={`crystal-art ${game.stage === 2 ? 'second' : ''}`}>
+          <Image key={game.stage} src={game.stage === 1 ? '/images/cristal-36.png' : '/images/cristal-500.png'} alt={game.stage === 1 ? 'Cristal violet portant le nombre 36' : 'Cristal rouge portant le nombre 500'} width={1640} height={959} sizes="(max-width: 600px) 90vw, 560px" priority />
+        </div>
         <div className="copy"><p className="step-label">Cadenas {game.stage}</p><h1>{game.stage === 1 ? 'Sceau de la mémoire' : 'Sceau de la convergence'}</h1><p>Saisissez la combinaison à quatre chiffres révélée par l’enquête.</p></div>
         <form onSubmit={e => { e.preventDefault(); void action({ action: 'submit', code }); }}><label htmlFor="lock-code">Combinaison</label>
           <input id="lock-code" value={code} onChange={e => { setCode(e.target.value.replace(/\D/g, '').slice(0, 4)); setMessage(''); }} inputMode="numeric" placeholder="0000" />
