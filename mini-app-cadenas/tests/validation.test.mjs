@@ -14,6 +14,70 @@ function load(path, dependencies) {
   return exports;
 }
 
+test('investigation batches contain all expected PDFs without the solution report', () => {
+  const { ENQUETE_BATCHES: batches } = load('lib/enquete.ts', {});
+  assert.equal(batches[0].stage, 2);
+  assert.equal(batches[1].stage, 3);
+  assert.deepEqual(batches[0].documents.map(doc => doc.id), [
+    'registre-biometrique', 'ancres', 'lettre-lyna', 'emargement',
+    'notice-historique', 'lettre-milo', 'post-it', 'journal-intime',
+  ]);
+  const documents = batches.flatMap(batch => batch.documents);
+  assert.equal(new Set(documents.map(doc => doc.id)).size, documents.length);
+  assert.deepEqual(documents.map(doc => doc.file).sort(), fs.readdirSync('enquete-documents').sort());
+  for (const doc of documents) {
+    assert.ok(!doc.file.includes('Rapport_enquete'));
+    const fd = fs.openSync(`enquete-documents/${doc.file}`, 'r');
+    const header = Buffer.alloc(5);
+    try { fs.readSync(fd, header, 0, 5, 0); } finally { fs.closeSync(fd); }
+    assert.equal(header.toString(), '%PDF-');
+  }
+});
+
+test('PDF access follows both locks and reset, even through direct URLs', async () => {
+  let stage = 1;
+  let exists = true;
+  const route = load('app/api/games/[code]/documents/[id]/route.ts', {
+    '@/lib/enquete': load('lib/enquete.ts', {}),
+    '@/lib/supabase': { databaseConfigured: () => true, db: async () => Response.json(exists ? [{ stage }] : []) },
+  });
+  const get = async id => {
+    const response = await route.GET(new Request('http://localhost'), { params: Promise.resolve({ code: 'ABC123', id }) });
+    if (response.status === 200) {
+      const reader = response.body.getReader();
+      let bytes = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytes += value.byteLength;
+      }
+      const { ENQUETE_BATCHES: batches } = load('lib/enquete.ts', {});
+      const doc = batches.flatMap(batch => batch.documents).find(doc => doc.id === id);
+      assert.equal(bytes, fs.statSync(`enquete-documents/${doc.file}`).size);
+    }
+    return response;
+  };
+  assert.equal((await get('notice-historique')).status, 403);
+  assert.equal((await get('carnet')).status, 403);
+  stage = 2;
+  const first = await get('notice-historique');
+  assert.equal(first.status, 200);
+  assert.equal(first.headers.get('content-type'), 'application/pdf');
+  assert.equal(first.headers.get('cache-control'), 'private, no-store');
+  assert.equal((await get('carnet')).status, 403);
+  stage = 3;
+  assert.equal((await get('notice-historique')).status, 200);
+  assert.equal((await get('carnet')).status, 200);
+  assert.equal((await get('photographies')).status, 200);
+  stage = 1;
+  assert.equal((await get('notice-historique')).status, 403);
+  assert.equal((await get('carnet')).status, 403);
+  assert.equal((await get('rapport-enquete')).status, 404);
+  assert.equal((await get('../../supabase.sql')).status, 404);
+  exists = false;
+  assert.equal((await get('notice-historique')).status, 404);
+});
+
 test('kill switch submissions explicitly confirm the unlocked stage', async () => {
   const row = { code: 'ABC123', stage: 1, attempts: 0, accept_any_code: true, gm_token: 'secret', updated_at: new Date().toISOString() };
   const route = load('app/api/games/[code]/route.ts', {
@@ -56,7 +120,7 @@ test('submitting device shows success and ignores a poll started before submissi
     useCallback: fn => { callbacks.push(fn); return fn; },
     useEffect: () => {},
   };
-  const home = load('app/page.tsx', { react });
+  const home = load('app/page.tsx', { react, '@/lib/enquete': load('lib/enquete.ts', {}) });
   const tree = home.default();
   const [applyGame, loadGame] = callbacks;
   applyGame(initial);

@@ -2,14 +2,10 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { ENQUETE_BATCHES } from '@/lib/enquete';
 
 type Game = { code: string; stage: 1 | 2 | 3; attempts: number; updatedAt: string; acceptAnyCode: boolean };
 type Tab = 'cadenas' | 'enquete' | 'chronologie' | 'mj';
-const DOCUMENTS = [
-  { title: 'Rapport d’anomalie', stage: 1, body: 'Une oscillation temporelle a été enregistrée près du vestiaire à 22 h 14. Trois signatures distinctes se chevauchent.' },
-  { title: 'Journal des appels', stage: 2, body: 'À 22 h 11, un appel de 47 secondes est émis depuis le couloir nord. Le terminal déclaré était pourtant hors service.' },
-  { title: 'Dossier d’empreintes', stage: 3, body: 'La trace relevée sur l’écrin correspond à un voyageur portant des gants à ancrage chronal de deuxième génération.' },
-];
 
 export default function Home() {
   const [game, setGame] = useState<Game | null>(null);
@@ -176,7 +172,12 @@ export default function Home() {
         <p className={`feedback ${message ? 'visible' : ''}`}>{message || 'Essais illimités — la progression est partagée.'}</p><p className="attempts">Essais de la partie : {game.attempts}</p>
       </>}
     </div>}
-    {tab === 'enquete' && <div className="panel documents"><p className="eyebrow">Archives récupérées</p><h1>Dossier d’enquête</h1>{DOCUMENTS.map(doc => <article key={doc.title} className={game.stage >= doc.stage ? '' : 'locked'}><span>Lot {doc.stage}</span><h2>{game.stage >= doc.stage ? doc.title : 'Document verrouillé'}</h2><p>{game.stage >= doc.stage ? doc.body : 'Stabilisez le prochain sceau pour récupérer cette archive.'}</p></article>)}</div>}
+    {tab === 'enquete' && <div className="panel documents"><p className="eyebrow">Archives récupérées</p><h1>Dossier d’enquête</h1>
+      {ENQUETE_BATCHES.map(batch => <section className="document-batch" key={batch.number} aria-labelledby={`batch-${batch.number}`}>
+        <div className="batch-heading"><h2 id={`batch-${batch.number}`}>Batch {batch.number}</h2><span>{game.stage >= batch.stage ? `${batch.documents.length} documents disponibles` : 'Verrouillé'}</span></div>
+        {game.stage >= batch.stage ? batch.documents.map(doc => <article key={doc.id}><h3>{doc.title}</h3><a href={`/api/games/${game.code}/documents/${doc.id}`} target="_blank" rel="noopener noreferrer" aria-label={`Ouvrir : ${doc.title} (PDF, nouvel onglet)`}>Ouvrir le document <span aria-hidden="true">↗</span></a></article>) : <p className="batch-locked">Déverrouillez le cadenas {batch.number} pour accéder à ces {batch.documents.length} documents.</p>}
+      </section>)}
+    </div>}
     {tab === 'chronologie' && <div className="panel timeline"><p className="eyebrow">État partagé</p><h1>Chronologie</h1><ol><li className="done"><b>Connexion établie</b><span>Les voyageurs ont rejoint la même ligne.</span></li><li className={game.stage >= 2 ? 'done' : ''}><b>Sceau de la mémoire</b><span>{game.stage >= 2 ? 'Stabilisé.' : 'En attente de combinaison.'}</span></li><li className={game.stage >= 3 ? 'done' : ''}><b>Sceau de la convergence</b><span>{game.stage >= 3 ? 'Stabilisé.' : 'Verrouillé.'}</span></li></ol></div>}
     {tab === 'mj' && gmToken && <div className="panel gm-panel"><p className="eyebrow">Console du chronomancien</p><h1>Contrôle MJ</h1><p>Ces commandes modifient tous les appareils.</p><div className="kill-switch"><h2>Kill switch des cadenas</h2><p>{game.acceptAnyCode ? 'Activé : toute combinaison de quatre chiffres saisie par les joueurs est valide et passe à l’étape suivante.' : 'Désactivé : seules les bonnes combinaisons ouvrent les cadenas.'}</p><button type="button" role="switch" aria-checked={game.acceptAnyCode} onClick={() => action({ action: 'set-bypass', gmToken, enabled: !game.acceptAnyCode })} disabled={busy}>{game.acceptAnyCode ? 'Désactiver le kill switch' : 'Activer le kill switch'}</button><p>Activer ce réglage ne change pas l’étape : les joueurs doivent saisir une combinaison. Réinitialiser la partie le désactive.</p></div><div className="gm-actions"><button onClick={() => action({ action: 'advance', gmToken })} disabled={busy || game.stage === 3}>Débloquer l’étape suivante</button><button className="danger" onClick={() => action({ action: 'reset', gmToken })} disabled={busy}>Réinitialiser la partie</button></div></div>}
     <footer className="game-footer"><span>Dernière évolution : {new Date(game.updatedAt).toLocaleTimeString('fr-FR')}</span><button onClick={leaveGame}>Quitter</button></footer>
