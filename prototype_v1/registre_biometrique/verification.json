@@ -1,0 +1,54 @@
+{
+  "pages": 7,
+  "format": "A4 portrait",
+  "images": [
+    {
+      "fiche": "01_remali",
+      "pixels": [
+        1055,
+        1491
+      ],
+      "dpi_effectifs": 139
+    },
+    {
+      "fiche": "02_kern",
+      "pixels": [
+        1054,
+        1492
+      ],
+      "dpi_effectifs": 139
+    },
+    {
+      "fiche": "03_saran",
+      "pixels": [
+        1054,
+        1492
+      ],
+      "dpi_effectifs": 139
+    },
+    {
+      "fiche": "04_bellini",
+      "pixels": [
+        1054,
+        1492
+      ],
+      "dpi_effectifs": 139
+    },
+    {
+      "fiche": "05_orsen",
+      "pixels": [
+        1054,
+        1492
+      ],
+      "dpi_effectifs": 139
+    },
+    {
+      "fiche": "06_de_montfaucon",
+      "pixels": [
+        1054,
+        1492
+      ],
+      "dpi_effectifs": 139
+    }
+  ]
+}

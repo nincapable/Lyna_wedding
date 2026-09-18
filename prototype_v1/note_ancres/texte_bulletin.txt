@@ -1,0 +1,108 @@
+INSTITUT DES STRUCTURES TEMPORELLES
+Compatibilité structurelle
+des ancres de continuité
+BULLETIN AT-NI/88 / série Ancrage / révision 06
+1. Domaine et signature historique
+AT-NI/88 / exemplaire de consultation 017
+1 / 4
+Une ancre maintient une relation structurelle avec l’histoire qui l’a constituée. Sa forme matérielle ne décrit
+pas cette relation : deux objets de même composition peuvent porter des signatures historiques
+incompatibles. Le présent bulletin traite des retraits, du transport et des tentatives de substitution entre
+branches distinctes.
+Définitions de travail
+H désigne la structure historique d’une branche ; A son ancre ; s(A) la signature d’ancrage ; K(A,H) la
+compatibilité structurelle. K = 1 signifie que la signature satisfait les contraintes propres à H. Une
+ressemblance de forme ou d’énergie ne suffit pas à établir K = 1.
+K(A,H) = 1  si  s(A) = s(H)
+s(H1) ≠ s(H2)  =>  K(A1,H2) = 0
+H1 / A1
+H2 / A2
+s(H1) ≠ s(H2)
+Figure 1. Deux structures distinctes et leurs relations internes.
+La compatibilité est définie par la signature complète. Les relations dessinées ci-dessus représentent des
+contraintes abstraites ; elles ne constituent pas un itinéraire de transfert.
+
+INSTITUT DES STRUCTURES TEMPORELLES
+Compatibilité structurelle
+des ancres de continuité
+BULLETIN AT-NI/88 / série Ancrage / révision 06
+2. Classes et comportement au retrait
+AT-NI/88 / exemplaire de consultation 017
+2 / 4
+La classification ci-dessous décrit l’état de liaison. Elle ne constitue pas une échelle de valeur des objets. Le
+retrait d’une ancre active rompt la relation avec sa branche d’origine tant que cette relation n’est pas rétablie
+dans sa fenêtre de stabilité.
+Classe
+Liaison historique
+Substitution
+A / active
+Signature propre maintenue
+Autre histoire : non
+R / retirée
+Relation interrompue
+Autre histoire : non
+T / transportée
+Objet contenu, liaison suspendue
+Autre histoire : non
+E / effondrée
+Structure humaine effacée
+Reconstruction : non
+Cas d’étude LC : anneau cérémoniel
+L’anneau associé à l’union de Lyna Remali et Clément Goldstein appartient à la classe A au sein de sa
+séquence. Son extraction déstabiliserait la chronologie d’origine. Le déplacer vers une autre branche ne
+transfère ni la filiation ni les événements liés à cette union.
+L’introduction de cet anneau dans une chronologie déjà effondrée ne reconstruirait pas les personnes
+disparues ni les événements perdus. La présence d’une ancre active étrangère ne restitue pas la structure
+historique qui a cessé de se maintenir.
+K(A_LC,H_effondrée) = 0
+
+INSTITUT DES STRUCTURES TEMPORELLES
+Compatibilité structurelle
+des ancres de continuité
+BULLETIN AT-NI/88 / série Ancrage / révision 06
+3. Réceptacle et limites du transport
+AT-NI/88 / exemplaire de consultation 017
+3 / 4
+Un réceptacle protège le porteur et l’objet pendant le transport. Il réduit leur exposition aux perturbations
+locales ; il ne modifie pas la signature historique de l’ancre. Un objet correctement isolé reste lié à son
+histoire d’origine.
+A_LC
+Volume isolé
+Figure 2. Isolation du volume ; la signature s(A) reste inchangée.
+Fonctions séparées
+Fonction
+Effet du réceptacle
+Protection du porteur
+Oui, pendant le transport
+Protection matérielle de l’objet
+Oui, selon les conditions de confinement
+Substitution entre histoires
+Aucun effet
+Reconstruction après effondrement
+Aucun effet
+
+INSTITUT DES STRUCTURES TEMPORELLES
+Compatibilité structurelle
+des ancres de continuité
+BULLETIN AT-NI/88 / série Ancrage / révision 06
+4. Synthèse et fiche de circulation
+AT-NI/88 / exemplaire de consultation 017
+4 / 4
+Deux ancres liées à des histoires différentes ne sont pas interchangeables. L’isolation matérielle et la
+compatibilité historique sont deux propriétés indépendantes. Aucun contenant ne convertit une signature
+d’ancrage en une autre.
+Dans le cas LC, le retrait de l’anneau déstabiliserait sa chronologie d’origine. Son introduction dans une
+branche effondrée ne ramènerait ni les personnes ni les événements perdus. Un réceptacle protège
+uniquement le porteur et l’objet au cours du transport ; il ne réalise aucune substitution.
+aucune restitution des structures humaines effacées
+La limite s’applique même lorsque l’ancre transportée est intacte. La conservation d’un objet ne vaut pas
+conservation de la structure humaine d’une histoire disparue.
+Fiche de prêt / exemplaire 017
+Consultation
+Initiales
+Retour
+Sur place
+Déposé au comptoir
+M.S.
+Exemplaire remis plié ; circulation sur place.
+Service de documentation / fonds Ancrage / AT-NI/88

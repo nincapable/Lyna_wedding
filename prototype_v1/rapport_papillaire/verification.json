@@ -1,0 +1,55 @@
+{
+  "pages": 3,
+  "format": "A4 portrait",
+  "fingerprint_width_mm": 29.99,
+  "export_dpi": 300,
+  "minimum_source_dpi": 102.49,
+  "source_limit": "Empreintes du registre agrandies sans ajout de détails ; résolution native conservée.",
+  "images": [
+    {
+      "asset": "Vignette P-01",
+      "effective_dpi": 443.65
+    },
+    {
+      "asset": "Vignette P-02",
+      "effective_dpi": 443.05
+    },
+    {
+      "asset": "Vignette P-03",
+      "effective_dpi": 443.65
+    },
+    {
+      "asset": "Vignette P-04",
+      "effective_dpi": 443.05
+    },
+    {
+      "asset": "P-01 trace",
+      "effective_dpi": 112.66
+    },
+    {
+      "asset": "P-01 référence",
+      "effective_dpi": 112.66
+    },
+    {
+      "asset": "P-02 trace",
+      "effective_dpi": 102.49
+    },
+    {
+      "asset": "P-02 référence",
+      "effective_dpi": 102.49
+    },
+    {
+      "asset": "P-03 partielle",
+      "effective_dpi": 392.73
+    },
+    {
+      "asset": "P-04 trace",
+      "effective_dpi": 102.49
+    },
+    {
+      "asset": "P-04 référence",
+      "effective_dpi": 102.49
+    }
+  ],
+  "forbidden_terms": "absents"
+}

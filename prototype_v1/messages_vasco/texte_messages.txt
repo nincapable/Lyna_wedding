@@ -1,0 +1,106 @@
+NŒUD / 07
+LOCAL / SUBJECTIF
+C7
+CENDRE-7
+canal privé / CN7-4V82 / liaison scellée
+V.B.   /   ARCHIVE LOCALE
+FLUX 01 / 02
+01
+02
+03
+J-3 / réception
+CENDRE-7
+#001
+Offre CN7-4V82. Objet : l’ancre portée lors de l’union. Paiement en Blemfalrk. Confirmez
+votre accès avant fixation du montant.
+LOC 09:14:06  /  SUB 112:08:31  /  reçu
+V.B.
+#002
+accès confirmé. Je dois encore examiner les conditions de sortie.
+LOC 09:26:42  /  SUB 112:21:07  /  envoyé
+CENDRE-7
+#003
+Acompte disponible : 400 Blemfalrk. Solde à la remise après contrôle. Canal de règlement :
+[7A91:D0F4:8C2E].
+LOC 09:28:19  /  SUB 112:22:44  /  reçu
+V.B.
+#004
+Acompte reçu. je serai sur place. Aucun engagement sur le transfert à ce stade.
+LOC 09:35:11  /  SUB 112:29:36  /  envoyé
+J-2 / réception
+CENDRE-7
+#005
+Fenêtre d’accès pendant la photo de groupe, appel entre 18 h 40 et 18 h 43. Salon réservé
+aux mariés. Écrin sur la commode.
+LOC 16:03:27  /  SUB 143:41:02  /  reçu
+V.B.
+#006
+extraction à évaluer. Il faut un contenant isolant adapté à cette classe d’ancrage. Un étui
+ordinaire ne convient pas.
+LOC 16:17:54  /  SUB 143:55:29  /  envoyé
+CENDRE-7
+#007
+Apportez votre contenant. Remise après 21 h 30, verrière nord. Le contrôle précédera le
+versement du solde.
+LOC 16:20:08  /  SUB 143:57:43  /  reçu
+V.B.
+#008
+Reçu. Transmettez les paramètres de stabilité et les conditions prévues après contrôle.
+LOC 16:31:40  /  SUB 144:09:15  /  envoyé
+LECTURE SEULE / VB-T09 / LC-09-01
+J : jour de réception · SUB : durée subjective · horloges conservées
+1/2
+
+NŒUD / 07
+LOCAL / SUBJECTIF
+C7
+CENDRE-7
+canal privé / CN7-4V82 / liaison scellée
+V.B.   /   ARCHIVE LOCALE
+FLUX 02 / 02
+01
+02
+03
+J-1 / réception
+CENDRE-7
+#009
+Paramètres joints : [bloc chiffré 02 / 6F0A:119C:72D8]. Votre tâche s’arrête à la livraison.
+L’utilisation suivante relève du client.
+LOC 10:06:15  /  SUB 161:12:50  /  reçu
+V.B.
+#010
+Je refuse la destruction de l’ancre. Cette condition vaut aussi après la remise. Votre pièce
+jointe ne répond pas à ce point.
+LOC 10:19:33  /  SUB 161:26:08  /  envoyé
+CENDRE-7
+#011
+Le client veut l’objet cette nuit. Les effets sur la branche d’origine seront traités ensuite.
+[segment illisible / 12 octets]
+LOC 10:22:47  /  SUB 161:29:22  /  reçu
+V.B.
+#012
+J’exige une garantie de restitution ou de substitution, avec protocole vérifiable. Précisez la
+compatibilité de la solution proposée.
+LOC 10:38:02  /  SUB 161:44:37  /  envoyé
+CENDRE-7
+#013
+Pas de délai supplémentaire. Le solde peut être augmenté. Une substitution sera étudiée
+après réception ; aucune garantie préalable.
+LOC 10:41:26  /  SUB 161:48:01  /  reçu
+V.B.
+#014
+je n’extrais rien sans solution stable. Le contenant protège le transport ; il ne règle pas la
+continuité d’origine.
+LOC 10:55:09  /  SUB 162:01:44  /  envoyé
+CENDRE-7
+#015
+Votre accès est confirmé. Nous maintenons le rendez-vous après 21 h 30. Décidez avant la
+réception.
+LOC 11:02:18  /  SUB 162:08:53  /  reçu
+V.B.
+#016
+En attente du protocole de stabilisation.
+LOC 11:14:36  /  SUB 162:21:11  /  brouillon non transmis
+LECTURE SEULE / VB-T09 / LC-09-01
+J : jour de réception · SUB : durée subjective · horloges conservées
+2/2

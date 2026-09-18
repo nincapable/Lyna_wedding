@@ -1,0 +1,20 @@
+{
+  "edition": 2187,
+  "lyna_nom": "Remali",
+  "clement_nom": "Goldstein",
+  "date_mariage": "____ / ____ / ______",
+  "branche_principale": [
+    {"nom": "Ariane Remali", "naissance": 2034, "conjoint": "Thomas Varenne", "naissance_conjoint": 2031, "union": 2061},
+    {"nom": "Lucien Remali", "naissance": 2065, "conjoint": "Inès Vidal", "naissance_conjoint": 2068, "union": 2092},
+    {"nom": "Jeanne Remali", "naissance": 2096, "conjoint": "Émile Morel", "naissance_conjoint": 2094, "union": 2124},
+    {"nom": "Élise Remali", "naissance": 2128},
+    {"nom": "Éléonore « Nora » Remali", "naissance": 2158}
+  ],
+  "branches_secondaires": [
+    {"nom": "Célia Remali", "naissance": 2069, "parent": "Ariane Remali"},
+    {"nom": "Maud Remali", "naissance": 2100, "parent": "Lucien Remali"},
+    {"nom": "Adrien de MontFaucont", "naissance": 2131, "parent": "Jeanne Remali"},
+    {"nom": "Sacha Remali", "naissance": 2162, "parent": "Élise Remali"}
+  ],
+  "note_production": "Lyna Remali est le nom fourni par l'utilisateur ; Clément Goldstein est inventé à sa demande. Les générations intermédiaires et branches secondaires sont des créations pour ce document. Élise, Nora et les dates 2158/2187 sont imposées par le prompt. La branche transmet le nom Remali. Aucun conjoint n'est ajouté à Élise."
+}

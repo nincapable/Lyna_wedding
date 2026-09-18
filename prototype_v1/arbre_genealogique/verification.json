@@ -1,0 +1,24 @@
+{
+  "pages": 1,
+  "format": "A3 paysage",
+  "text_and_lines": "vectoriels",
+  "export_dpi": 300,
+  "direct_line": [
+    "Lyna Remali et Clément Goldstein",
+    "Ariane Remali",
+    "Lucien Remali",
+    "Jeanne Remali",
+    "Élise Remali",
+    "Éléonore « Nora » Remali"
+  ],
+  "birth_years": [
+    2034,
+    2065,
+    2096,
+    2128,
+    2158
+  ],
+  "ages_checked": true,
+  "names_pending": false,
+  "wedding_date_pending": true
+}

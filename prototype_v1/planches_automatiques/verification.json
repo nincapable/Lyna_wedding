@@ -1,0 +1,298 @@
+{
+  "pages": 2,
+  "format": "A4 paysage",
+  "vues_par_page": 12,
+  "minimum_dpi": 309.76,
+  "timestamps": "24 vérifiés",
+  "names": "absents",
+  "frames": [
+    {
+      "page": 0,
+      "number": 0,
+      "time": "18:40:38",
+      "filename": "MR_184038",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184038.png",
+      "pixels": [
+        887,
+        589
+      ],
+      "effective_dpi": 336.62
+    },
+    {
+      "page": 0,
+      "number": 1,
+      "time": "18:40:42",
+      "filename": "MR_184042",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184042.png",
+      "pixels": [
+        887,
+        586
+      ],
+      "effective_dpi": 334.91
+    },
+    {
+      "page": 0,
+      "number": 2,
+      "time": "18:40:47",
+      "filename": "MR_184047",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184047.png",
+      "pixels": [
+        887,
+        589
+      ],
+      "effective_dpi": 336.62
+    },
+    {
+      "page": 0,
+      "number": 3,
+      "time": "18:40:51",
+      "filename": "MR_184051",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184051.png",
+      "pixels": [
+        887,
+        588
+      ],
+      "effective_dpi": 336.05
+    },
+    {
+      "page": 0,
+      "number": 4,
+      "time": "18:40:56",
+      "filename": "MR_184056",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184056.png",
+      "pixels": [
+        887,
+        586
+      ],
+      "effective_dpi": 334.91
+    },
+    {
+      "page": 0,
+      "number": 5,
+      "time": "18:41:02",
+      "filename": "MR_184102",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184102.png",
+      "pixels": [
+        887,
+        589
+      ],
+      "effective_dpi": 336.62
+    },
+    {
+      "page": 0,
+      "number": 6,
+      "time": "18:43:12",
+      "filename": "MR_184312",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184312.png",
+      "pixels": [
+        887,
+        588
+      ],
+      "effective_dpi": 336.05
+    },
+    {
+      "page": 0,
+      "number": 7,
+      "time": "18:43:18",
+      "filename": "MR_184318",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184318.png",
+      "pixels": [
+        887,
+        586
+      ],
+      "effective_dpi": 334.91
+    },
+    {
+      "page": 0,
+      "number": 8,
+      "time": "18:43:24",
+      "filename": "MR_184324",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184324.png",
+      "pixels": [
+        887,
+        589
+      ],
+      "effective_dpi": 336.62
+    },
+    {
+      "page": 0,
+      "number": 9,
+      "time": "18:43:31",
+      "filename": "MR_184331",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184331.png",
+      "pixels": [
+        1536,
+        1024
+      ],
+      "effective_dpi": 585.23
+    },
+    {
+      "page": 0,
+      "number": 10,
+      "time": "18:43:37",
+      "filename": "MR_184337",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184337.png",
+      "pixels": [
+        1536,
+        1024
+      ],
+      "effective_dpi": 585.23
+    },
+    {
+      "page": 0,
+      "number": 11,
+      "time": "18:43:44",
+      "filename": "MR_184344",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184344.png",
+      "pixels": [
+        1536,
+        1024
+      ],
+      "effective_dpi": 585.23
+    },
+    {
+      "page": 1,
+      "number": 0,
+      "time": "18:44:01",
+      "filename": "MR_184401",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184401.png",
+      "pixels": [
+        887,
+        561
+      ],
+      "effective_dpi": 320.62
+    },
+    {
+      "page": 1,
+      "number": 1,
+      "time": "18:44:18",
+      "filename": "MR_184418",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184418.png",
+      "pixels": [
+        887,
+        555
+      ],
+      "effective_dpi": 317.19
+    },
+    {
+      "page": 1,
+      "number": 2,
+      "time": "18:44:37",
+      "filename": "MR_184437",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184437.png",
+      "pixels": [
+        887,
+        644
+      ],
+      "effective_dpi": 337.95
+    },
+    {
+      "page": 1,
+      "number": 3,
+      "time": "18:44:55",
+      "filename": "MR_184455",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184455.png",
+      "pixels": [
+        887,
+        560
+      ],
+      "effective_dpi": 320.05
+    },
+    {
+      "page": 1,
+      "number": 4,
+      "time": "18:45:08",
+      "filename": "MR_184508",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184508.png",
+      "pixels": [
+        887,
+        542
+      ],
+      "effective_dpi": 309.76
+    },
+    {
+      "page": 1,
+      "number": 5,
+      "time": "18:45:25",
+      "filename": "MR_184525",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184525.png",
+      "pixels": [
+        887,
+        627
+      ],
+      "effective_dpi": 337.95
+    },
+    {
+      "page": 1,
+      "number": 6,
+      "time": "18:45:46",
+      "filename": "MR_184546",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184546.png",
+      "pixels": [
+        887,
+        560
+      ],
+      "effective_dpi": 320.05
+    },
+    {
+      "page": 1,
+      "number": 7,
+      "time": "18:46:04",
+      "filename": "MR_184604",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184604.png",
+      "pixels": [
+        887,
+        542
+      ],
+      "effective_dpi": 309.76
+    },
+    {
+      "page": 1,
+      "number": 8,
+      "time": "18:46:23",
+      "filename": "MR_184623",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184623.png",
+      "pixels": [
+        887,
+        625
+      ],
+      "effective_dpi": 337.95
+    },
+    {
+      "page": 1,
+      "number": 9,
+      "time": "18:46:42",
+      "filename": "MR_184642",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184642.png",
+      "pixels": [
+        887,
+        560
+      ],
+      "effective_dpi": 320.05
+    },
+    {
+      "page": 1,
+      "number": 10,
+      "time": "18:47:04",
+      "filename": "MR_184704",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184704.png",
+      "pixels": [
+        887,
+        542
+      ],
+      "effective_dpi": 309.76
+    },
+    {
+      "page": 1,
+      "number": 11,
+      "time": "18:47:21",
+      "filename": "MR_184721",
+      "path": "C:\\Users\\poiro\\Documents\\Perso\\Lyna_s_wedding\\prototype_v1\\planches_automatiques\\vues\\MR_184721.png",
+      "pixels": [
+        887,
+        625
+      ],
+      "effective_dpi": 337.95
+    }
+  ]
+}

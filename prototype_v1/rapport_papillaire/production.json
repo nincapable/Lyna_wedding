@@ -1,0 +1,47 @@
+{
+  "macro_source": "C:\\Users\\poiro\\.codex\\generated_images\\01a0a537-854b-7b93-8b7a-cfff00098209\\exec-36428eae-acc0-47b6-a68f-de76c2dfb448.png",
+  "imagegen_prompt": "Use case: scientific-educational. Create ONE illustrated laboratory contact sheet consisting of exactly four equal rectangular panels arranged 2 columns x 2 rows with generous even blank ivory gutters, perfectly aligned, no labels or text anywhere. Intended asset for a French laboratory surface-treatment report. Each panel is a close-up technical ink and graphite drawing with subtle muted watercolor, crisp very fine engraved lines on light ivory paper, NOT photography, no photorealism. Top left: close-up of smooth flat upper lid of a small dark charcoal rigid wedding ring case, closed, showing the plane of its lid and one seam, no contents. Top right: close-up of the FRONT RIGHT CORNER of a simple wooden chest of drawers with a polished walnut top, three quarter angle showing front and right side. Bottom left: close-up of the INSIDE EDGE of its upper drawer, drawer slightly open, plain varnished wooden interior with no contents. Bottom right: a small neutral cream glazed ceramic decorative pebble-shaped object, resting on the nearby simple wooden side table; close-up shows the curved glazed surface and edge of table. Materials subdued grey, brown, cream. Each panel white/ivory background, no surrounding room scene. Objects mundane, no people, no hands, no rings, no hidden objects. Surfaces have subtle traces of dark processing powder at an edge but DO NOT DRAW fingerprints or identifiable ridge patterns (these are documented separately). Absolutely no arrows, red circles, highlighting, captions, logos, text, numbering, rulers, dramatic lighting or interpretive markings. Flat artwork, not a document mockup. Maximum native resolution, landscape image.",
+  "imagegen_mode": "outil intégré",
+  "reference_registry": "../registre_biometrique/registre_biometrique_LC-18-42.pdf",
+  "reference_crops": [
+    {
+      "code": "P-01",
+      "file": "01_remali.png",
+      "box": [
+        62,
+        744,
+        195,
+        919
+      ],
+      "name": "Éléonore Remali",
+      "finger": "Pouce droit",
+      "sheet": "LC-RB-01"
+    },
+    {
+      "code": "P-02",
+      "file": "02_kern.png",
+      "box": [
+        268,
+        745,
+        389,
+        919
+      ],
+      "name": "Salomé Kern",
+      "finger": "Index droit",
+      "sheet": "LC-RB-02"
+    },
+    {
+      "code": "P-04",
+      "file": "03_saran.png",
+      "box": [
+        268,
+        744,
+        389,
+        919
+      ],
+      "name": "Milo Saran",
+      "finger": "Index droit",
+      "sheet": "LC-RB-03"
+    }
+  ]
+}
