@@ -97,6 +97,27 @@ test('suspect selection requires confirmation and both endings open the report i
       nodes(tree).find(node => node.type === 'button').props.onClick();
       tree = render();
       assert.equal(nodes(tree).find(node => node.type === 'iframe').props.src, '/api/games/ABC123/report#view=FitH');
+      nodes(tree).find(node => node.type === 'button').props.onClick();
+      tree = render();
+      const retry = nodes(tree).find(node => node.type === 'button' && node.props.children === 'Réessayer — choisir un autre suspect');
+      assert.equal(Boolean(retry), !correct);
+      if (retry) {
+        retry.props.onClick();
+        tree = render();
+        assert.equal(nodes(tree).filter(node => node.type === 'input').length, suspects.SUSPECTS.length);
+        assert.equal(nodes(tree).find(node => node.type === 'button').props.disabled, true);
+        nodes(tree).find(node => node.type === 'input' && node.props.value === 'kern').props.onChange();
+        global.fetch = async (_, init) => {
+          requests++;
+          assert.equal(JSON.parse(init.body).suspectId, 'kern');
+          return Response.json({ correct: true, suspectId: 'kern' });
+        };
+        tree = render();
+        await nodes(tree).find(node => node.type === 'button').props.onClick();
+        tree = render();
+        assert.equal(requests, 2);
+        assert.equal(nodes(tree).find(node => node.type === 'h1').props.children, 'Félicitations !');
+      }
     }
   } finally { global.fetch = originalFetch; }
 });

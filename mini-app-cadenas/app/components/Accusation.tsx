@@ -32,6 +32,7 @@ export default function Accusation({ gameCode }: { gameCode: string }) {
       <h1>{result.correct ? 'Félicitations !' : 'Le mystère demeure'}</h1>
       {result.correct ? <p>Vous avez démasqué {SUSPECTS.find(suspect => suspect.id === result.suspectId)?.name}. L’anneau a été retrouvé : découvrez toute la vérité dans le rapport d’enquête.</p> : <p>Le suspect désigné n’est pas le coupable. L’anneau a été replacé à 21 h 16 : visiblement, le voleur n’était pas mal intentionné. Une équipe indépendante du futur a produit ce rapport pour éclaircir les événements.</p>}
       <button className="primary" onClick={() => setReport(true)}>Consulter le rapport d’enquête</button>
+      {!result.correct && <button className="primary" onClick={() => { setResult(null); setSelected(''); setError(''); setReport(false); }}>Réessayer — choisir un autre suspect</button>}
     </section> : <>
       <p className="eyebrow">Dernière déduction</p><h1>Désignez le coupable</h1>
       <p>Sélectionnez un suspect, puis confirmez votre accusation pour découvrir la conclusion de l’enquête.</p>
