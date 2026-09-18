@@ -267,8 +267,8 @@ test('a recognized photo authorizes code entry without opening the second lock',
     if (!node || typeof node !== 'object') return [];
     return [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)];
   }
-  assert.equal(nodes(tree).find(node => node.props?.id === 'lock-code').props.disabled, true);
-  assert.equal(nodes(tree).find(node => node.type === 'form').props.children[2].props.disabled, true);
+  assert.equal(nodes(tree).some(node => node.props?.id === 'lock-code'), false);
+  assert.equal(nodes(tree).some(node => node.type === 'form'), false);
   states[0] = { ...initial, acceptAnyCode: true }; index = 0;
   assert.equal(nodes(home.default()).find(node => node.props?.id === 'lock-code').props.disabled, false);
   states[0] = initial;

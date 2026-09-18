@@ -191,9 +191,9 @@ export default function Home() {
         </div>
         <div className="copy"><p className="step-label">Cadenas {game.stage}</p><h1>Rapports d’enquête</h1><p>{game.stage === 1 ? 'Saisissez la combinaison à quatre chiffres révélée par l’enquête.' : "Reconstituez le dragon pour déchiffrer les sorts liés à l'engramme"}</p></div>
         {game.stage === 2 && <DragonScanner disabled={busy || unlockedStage !== null} onScan={action} />}
-        <form onSubmit={e => { e.preventDefault(); void action({ action: 'submit', code, ...(game.stage === 2 ? { scanToken } : {}) }); }}><label htmlFor="lock-code">Combinaison</label>
+        {!codeLocked && <form onSubmit={e => { e.preventDefault(); void action({ action: 'submit', code, ...(game.stage === 2 ? { scanToken } : {}) }); }}><label htmlFor="lock-code">Combinaison</label>
           <input id="lock-code" value={code} disabled={busy || codeLocked} onChange={e => { setCode(e.target.value.replace(/\D/g, '').slice(0, 4)); setMessage(''); }} inputMode="numeric" placeholder="0000" />
-          <button disabled={busy || codeLocked || code.length !== 4}>Tenter la combinaison</button></form>
+          <button disabled={busy || codeLocked || code.length !== 4}>Tenter la combinaison</button></form>}
         <p className={`feedback ${message ? 'visible' : ''}`}>{message || 'Essais illimités — la progression est partagée.'}</p><p className="attempts">Essais illimités — aucune limite de tentatives.<br />Essais de la partie : {game.attempts}</p>
       </>}
     </div>}

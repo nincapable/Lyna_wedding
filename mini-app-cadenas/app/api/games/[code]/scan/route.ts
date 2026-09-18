@@ -40,7 +40,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ co
     if (!response.ok) throw new Error('DB_ERROR');
     const [updated] = await response.json() as GameRow[];
     if (!updated) return NextResponse.json({ error: 'La partie a changé pendant le scan. Réessayez.' }, { status: 409 });
-    const message = accepted ? 'Dragon reconnu ! Vous pouvez maintenant saisir la combinaison du cadenas 2.'
+    const message = accepted ? "Les sorts liés à l'engramme sont à présents déchiffrés"
       : reason === 'violet' ? 'Les traits violets ne sont pas assez visibles. Rapprochez-vous et éclairez les cartes.'
       : reason === 'alignment' ? 'Le dragon ne correspond pas. Vérifiez la position des cartes et photographiez-les bien de dessus.'
       : 'Le dragon est incomplet ou désaligné. Vérifiez la tête, les ailes et la queue, puis réessayez.';
