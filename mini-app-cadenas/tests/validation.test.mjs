@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import ts from 'typescript';
 import { createRequire } from 'node:module';
 const resolveModule = createRequire(import.meta.url);
+const Viewer = () => null;
 
 test('final accusation checks the dossier culprit and report remains gated by both locks', async () => {
   let stage = 1;
@@ -40,7 +41,7 @@ test('final accusation checks the dossier culprit and report remains gated by bo
 });
 
 function load(path, dependencies) {
-  dependencies = { '@/lib/scan-proof': loadProof(), ...dependencies };
+  dependencies = { '@/lib/scan-proof': loadProof(), '@/app/components/PdfViewer': { default: Viewer }, ...dependencies };
   const code = ts.transpileModule(fs.readFileSync(path, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
   }).outputText;
@@ -96,7 +97,7 @@ test('suspect selection requires confirmation and both endings open the report i
       } else assert.equal(nodes(tree).find(node => node.type === 'h1').props.children, 'Félicitations !');
       nodes(tree).find(node => node.type === 'button').props.onClick();
       tree = render();
-      assert.equal(nodes(tree).find(node => node.type === 'iframe').props.src, '/api/games/ABC123/report#view=FitH');
+      assert.equal(nodes(tree).find(node => node.type === Viewer).props.src, '/api/games/ABC123/report');
       nodes(tree).find(node => node.type === 'button').props.onClick();
       tree = render();
       const retry = nodes(tree).find(node => node.type === 'button' && node.props.children === 'Réessayer — choisir un autre suspect');

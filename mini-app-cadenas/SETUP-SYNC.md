@@ -27,6 +27,12 @@ Une reconnaissance valide autorise la saisie du code du cadenas 2 sur l’appare
 Le serveur signe une preuve du scan liée à la version de la partie, sans ajouter de colonne Supabase. Une erreur de combinaison renouvelle cette preuve pour permettre un nouvel essai. Un changement de la partie sur un autre appareil, une réinitialisation ou un rechargement de la page peut demander un nouveau scan.
 
 La photo est redimensionnée sur l’appareil avant envoi et n’est pas enregistrée. Aucune API d’IA ni clé supplémentaire n’est nécessaire. Les références sont privées côté serveur et incluses dans le déploiement. Les tests couvrent une vraie photo des cartes imprimées, compression, rotation, luminosité, perspective, occlusion simulée, dessin incomplet, morceaux déplacés et image inversée. Tester plusieurs photos des cartes imprimées avant la partie pour vérifier les conditions réelles d’éclairage et d’empilement.
+## Lecture des documents sur smartphone
+
+Les documents des deux engrammes et le rapport de résolution utilisent un lecteur PDF.js intégré, sans iframe ni nouvel onglet. Chaque page est affichée dans l’application avec des boutons précédent/suivant, un zoom et un ajustement à la largeur. Le lecteur utilise les mêmes routes privées : l’accès reste soumis à l’ouverture des cadenas. Les pages sont rendues une à une et la résolution est plafonnée pour limiter la mémoire sur téléphone.
+
+Le moteur PDF, ses polices et ses ressources sont servis depuis l’application, sans CDN. `scripts/copy-pdf-assets.mjs` les copie depuis la version installée de `pdfjs-dist` lors de l’installation et avant `npm run dev` ou `npm run build`. Ces fichiers générés sont exclus de Git et du lint. Aucune modification Supabase supplémentaire n’est nécessaire pour le lecteur.
+
 ## Conclusion de l’enquête
 
 Une fois les deux cadenas ouverts, l’onglet Suspects présente les six personnes du dossier. Le joueur sélectionne un suspect puis confirme avec le bouton distinct « Désigner … coupable ». La réponse est vérifiée sur le serveur d’après le dossier : Salomé Kern est la coupable. Le kill switch des cadenas ne modifie pas ce verdict.

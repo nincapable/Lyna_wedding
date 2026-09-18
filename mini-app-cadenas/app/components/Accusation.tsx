@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { SUSPECTS } from '@/lib/suspects';
+import PdfViewer from '@/app/components/PdfViewer';
 
 export default function Accusation({ gameCode }: { gameCode: string }) {
   const [selected, setSelected] = useState('');
@@ -23,7 +24,7 @@ export default function Accusation({ gameCode }: { gameCode: string }) {
   }
   if (report && result) return <div className="panel documents"><section className="document-reader">
     <button className="reader-back" onClick={() => setReport(false)}>← Retour à la conclusion</button>
-    <h1>Rapport d’enquête</h1><iframe src={`/api/games/${gameCode}/report#view=FitH`} title="Rapport d’enquête — résolution" className="document-frame" />
+    <h1>Rapport d’enquête</h1><PdfViewer src={`/api/games/${gameCode}/report`} title="Rapport d’enquête — résolution" />
   </section></div>;
   return <div className="panel accusation-panel">
     {result ? <section className="investigation-result" aria-live="polite">

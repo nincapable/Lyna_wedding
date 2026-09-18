@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { ENQUETE_BATCHES } from '@/lib/enquete';
 import DragonScanner from '@/app/components/DragonScanner';
 import Accusation from '@/app/components/Accusation';
+import PdfViewer from '@/app/components/PdfViewer';
 
 type Game = { code: string; stage: 1 | 2 | 3; attempts: number; updatedAt: string; acceptAnyCode: boolean; bypassDragon: boolean };
 type Tab = 'cadenas' | 'enquete' | 'accusation' | 'mj';
@@ -201,7 +202,7 @@ export default function Home() {
       {activeDocument ? <section className="document-reader" aria-label="Consultation du document">
         <button type="button" className="reader-back" onClick={() => setSelectedDocument(null)}>← Retour aux documents</button>
         <h2>{activeDocument.title}</h2>
-        <iframe key={activeDocument.id} src={`/api/games/${game.code}/documents/${activeDocument.id}#view=FitH`} title={activeDocument.title} className="document-frame" />
+        <PdfViewer key={activeDocument.id} src={`/api/games/${game.code}/documents/${activeDocument.id}`} title={activeDocument.title} />
       </section> : ENQUETE_BATCHES.map(batch => <section className="document-batch" key={batch.number} aria-labelledby={`batch-${batch.number}`}>
         <div className="batch-heading"><h2 id={`batch-${batch.number}`}>Engramme {batch.number}</h2><span>{game.stage >= batch.stage ? `${batch.documents.length} documents disponibles` : 'Verrouillé'}</span></div>
         {game.stage >= batch.stage ? batch.documents.map(doc => <article key={doc.id}><h3>{doc.title}</h3><button type="button" className="document-open" onClick={() => setSelectedDocument(doc.id)} aria-label={`Consulter : ${doc.title}`}>Consulter le document</button></article>) : <p className="batch-locked">Déverrouillez le cadenas {batch.number} pour accéder à ces {batch.documents.length} documents.</p>}
