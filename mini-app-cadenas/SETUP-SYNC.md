@@ -14,4 +14,4 @@ Le navigateur actualise l’état toutes les deux secondes. L’appareil qui cr�
 
 ## Kill switch MJ
 
-Pour une base existante, réexécuter `supabase.sql` dans SQL Editor pour ajouter `accept_any_code` sans supprimer les parties. Seul le MJ peut activer ou désactiver le kill switch. Actif, il affiche « Combinaison valide. » pour toute combinaison de quatre chiffres, sans changer l’étape. Le MJ utilise « Débloquer l’étape suivante » pour faire progresser la partie. Réinitialiser la partie désactive le kill switch.
+Pour une base existante, réexécuter `supabase.sql` dans SQL Editor pour ajouter `accept_any_code` sans supprimer les parties. Seul le MJ peut activer ou désactiver le kill switch. L’activer ne change pas l’étape. Lorsqu’il est actif, toute combinaison de quatre chiffres saisie par les joueurs est valide et fait passer à l’étape suivante, comme une bonne combinaison. Réinitialiser la partie désactive le kill switch.
