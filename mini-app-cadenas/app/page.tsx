@@ -1,6 +1,6 @@
  'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 type Game = { code: string; stage: 1 | 2 | 3; attempts: number; updatedAt: string; acceptAnyCode: boolean };
 type Tab = 'cadenas' | 'enquete' | 'chronologie' | 'mj';
@@ -19,10 +19,25 @@ export default function Home() {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [unlockedStage, setUnlockedStage] = useState<1 | 2 | null>(null);
+  const latestGame = useRef<Game | null>(null);
+
+  const applyGame = useCallback((next: Game) => {
+    const previous = latestGame.current;
+    if (previous?.code === next.code && Date.parse(next.updatedAt) < Date.parse(previous.updatedAt)) return;
+    if (previous?.code === next.code && next.stage > previous.stage && previous.stage < 3) {
+      setUnlockedStage(previous.stage as 1 | 2);
+      setCode('');
+      setTab('cadenas');
+    } else if (previous?.code !== next.code || next.stage < previous.stage) {
+      setUnlockedStage(null);
+    }
+    latestGame.current = next;
+    setGame(next);
+  }, []);
 
   useEffect(() => {
     if (unlockedStage === null) return;
-    const timer = window.setTimeout(() => setUnlockedStage(null), 1400);
+    const timer = window.setTimeout(() => setUnlockedStage(null), 2200);
     return () => window.clearTimeout(timer);
   }, [unlockedStage]);
 
@@ -30,14 +45,14 @@ export default function Home() {
     try {
       const response = await fetch(`/api/games/${sessionCode}`, { cache: 'no-store' });
       if (!response.ok) throw new Error(response.status === 404 ? 'Partie introuvable.' : 'Synchronisation impossible.');
-      setGame(await response.json() as Game);
+      applyGame(await response.json() as Game);
       if (!silent) setMessage('Partie synchronisée.');
       return true;
     } catch (error) {
       if (!silent) setMessage(error instanceof Error ? error.message : 'Erreur inconnue.');
       return false;
     }
-  }, []);
+  }, [applyGame]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -62,7 +77,7 @@ export default function Home() {
       if (!response.ok) throw new Error(data.error ?? 'Création impossible.');
       localStorage.setItem('bague-game-code', data.code);
       localStorage.setItem('bague-gm-token', data.gmToken);
-      setGmToken(data.gmToken); setGame(data); setJoinCode(data.code); setTab('cadenas');
+      setGmToken(data.gmToken); applyGame(data); setJoinCode(data.code); setTab('cadenas');
       setMessage('Partie créée. Partagez le code aux deux équipes.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Erreur inconnue.'); }
     finally { setBusy(false); }
@@ -88,16 +103,14 @@ export default function Home() {
       const response = await fetch(`/api/games/${game.code}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'Action refusée.');
-      if (body.action === 'submit' && game.stage < 3 && data.stage > game.stage) {
-        setUnlockedStage(game.stage as 1 | 2);
-      }
-      setGame(data); setCode(''); setMessage(data.message ?? 'État synchronisé.');
+      applyGame(data); setCode(''); setMessage(data.message ?? 'État synchronisé.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Erreur inconnue.'); }
     finally { setBusy(false); }
   }
 
   function leaveGame() {
     localStorage.removeItem('bague-game-code'); localStorage.removeItem('bague-gm-token');
+    latestGame.current = null;
     setGame(null); setGmToken(''); setJoinCode(''); setMessage(''); setUnlockedStage(null);
   }
 
