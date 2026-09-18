@@ -16,3 +16,17 @@ form{margin:8px 4px 0;padding:14px 18px;border:3px ridge #88704b;background:#c9b
 @media(max-width:600px){.portal-card,.game-frame{padding:14px;border-width:4px}.tabs{grid-template-columns:repeat(2,1fr)}.panel{min-height:430px;padding:18px}.topbar{padding:4px 2px 14px}.sync{font-size:0}.sync i{width:10px;height:10px}.game-footer{align-items:flex-start;gap:12px}}
 
 .kill-switch{margin-top:24px;padding:18px;border:1px solid #a68143;border-radius:6px;background:#211b13}.kill-switch h2{margin:0 0 10px;font-size:22px}.kill-switch p{color:#aaa08c;line-height:1.5}.kill-switch button{width:100%;padding:14px;border:3px outset #a68143;border-radius:6px;background:linear-gradient(#e5c87f,#a97831);color:#21170b;font-weight:700;cursor:pointer}.kill-switch button[aria-checked="true"]{background:linear-gradient(#a6564c,#632923);color:#fff;border-color:#8e4941}.kill-switch button:disabled{opacity:.5;cursor:wait}
+
+.unlock-celebration{min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;animation:unlock-reveal .35s ease-out both}
+.unlock-celebration>p:last-child{color:#aaa08c;line-height:1.6}
+.unlock-emblem{position:relative;display:grid;place-items:center;width:150px;height:150px;margin-bottom:32px;border:1px solid #d6ad58;border-radius:50%;color:#f0d99c;background:radial-gradient(circle,#d6ad5826,transparent 70%);animation:unlock-glow 1.4s ease-out both}
+.unlock-icon{width:92px;height:92px;overflow:visible}
+.unlock-shackle{transform-origin:30px 46px;animation:unlock-open .55s .12s ease-out both}
+.unlock-check{stroke:#94d7a5;stroke-dasharray:40;stroke-dashoffset:40;animation:unlock-tick .3s .45s ease-out forwards}
+.unlock-wave{position:absolute;inset:0;border:1px solid #e5c87f;border-radius:50%;animation:unlock-ripple 1.2s ease-out both}
+@keyframes unlock-reveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes unlock-open{from{transform:rotate(0)}to{transform:rotate(-28deg) translateY(-5px)}}
+@keyframes unlock-tick{to{stroke-dashoffset:0}}
+@keyframes unlock-ripple{from{transform:scale(1);opacity:.8}to{transform:scale(1.65);opacity:0}}
+@keyframes unlock-glow{0%,100%{box-shadow:0 0 24px #d6ad5826}45%{box-shadow:0 0 65px #d6ad5866,0 0 0 12px #d6ad580c}}
+@media(prefers-reduced-motion:reduce){.unlock-celebration,.unlock-emblem,.unlock-shackle,.unlock-check,.unlock-wave{animation:none}.unlock-check{stroke-dashoffset:0}.unlock-shackle{transform:rotate(-28deg) translateY(-5px)}.unlock-wave{display:none}}

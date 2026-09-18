@@ -18,6 +18,13 @@ export default function Home() {
   const [tab, setTab] = useState<Tab>('cadenas');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [unlockedStage, setUnlockedStage] = useState<1 | 2 | null>(null);
+
+  useEffect(() => {
+    if (unlockedStage === null) return;
+    const timer = window.setTimeout(() => setUnlockedStage(null), 1400);
+    return () => window.clearTimeout(timer);
+  }, [unlockedStage]);
 
   const loadGame = useCallback(async (sessionCode: string, silent = false) => {
     try {
@@ -75,12 +82,15 @@ export default function Home() {
   }
 
   async function action(body: Record<string, string | boolean>) {
-    if (!game) return;
+    if (!game || busy || unlockedStage !== null) return;
     setBusy(true);
     try {
       const response = await fetch(`/api/games/${game.code}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? 'Action refusée.');
+      if (body.action === 'submit' && game.stage < 3 && data.stage > game.stage) {
+        setUnlockedStage(game.stage as 1 | 2);
+      }
       setGame(data); setCode(''); setMessage(data.message ?? 'État synchronisé.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Erreur inconnue.'); }
     finally { setBusy(false); }
@@ -88,7 +98,7 @@ export default function Home() {
 
   function leaveGame() {
     localStorage.removeItem('bague-game-code'); localStorage.removeItem('bague-gm-token');
-    setGame(null); setGmToken(''); setJoinCode(''); setMessage('');
+    setGame(null); setGmToken(''); setJoinCode(''); setMessage(''); setUnlockedStage(null);
   }
 
   if (!game) return <main className="app-shell"><section className="portal-card">
@@ -111,7 +121,19 @@ export default function Home() {
       {gmToken && <button className={tab === 'mj' ? 'active' : ''} onClick={() => setTab('mj')}>MJ</button>}
     </nav>
     {tab === 'cadenas' && <div className="panel">
-      {game.stage === 3 ? <div className="victory"><div className="sigil complete">✦</div><p className="eyebrow">Continuum restauré</p><h1>Le passage est ouvert</h1><p>Les deux sceaux ont été déverrouillés sur tous les appareils.</p></div> : <>
+      {unlockedStage !== null ? <div className="unlock-celebration" role="status" aria-live="polite">
+        <div className="unlock-emblem" aria-hidden="true">
+          <div className="unlock-wave" />
+          <svg className="unlock-icon" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
+            <path className="unlock-shackle" d="M30 46V29a20 20 0 0 1 40 0v17" />
+            <rect x="23" y="46" width="54" height="42" rx="7" />
+            <path className="unlock-check" d="m37 67 9 9 18-20" />
+          </svg>
+        </div>
+        <p className="eyebrow">Combinaison validée</p>
+        <h1>Sceau {unlockedStage === 1 ? 'I' : 'II'} déverrouillé</h1>
+        <p>{unlockedStage === 2 ? 'Le continuum se restaure…' : 'Le prochain sceau se révèle…'}</p>
+      </div> : game.stage === 3 ? <div className="victory"><div className="sigil complete">✦</div><p className="eyebrow">Continuum restauré</p><h1>Le passage est ouvert</h1><p>Les deux sceaux ont été déverrouillés sur tous les appareils.</p></div> : <>
         <div className="progress"><span className="active">I</span><i/><span className={game.stage === 2 ? 'active' : ''}>II</span></div>
         <div className={`sigil ${game.stage === 2 ? 'second' : ''}`}><span>{game.stage === 1 ? 'I' : 'II'}</span></div>
         <div className="copy"><p className="step-label">Cadenas {game.stage}</p><h1>{game.stage === 1 ? 'Sceau de la mémoire' : 'Sceau de la convergence'}</h1><p>Saisissez la combinaison à quatre chiffres révélée par l’enquête.</p></div>
