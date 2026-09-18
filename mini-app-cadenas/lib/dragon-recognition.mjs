@@ -4,6 +4,14 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const SIZE = 512;
+export const DRAGON_TOLERANCE = Object.freeze({
+  pointRadius: 10,
+  minimumCoverage: .6,
+  minimumPrecision: .75,
+  regionCoverage: .35,
+  requiredRegionFraction: .75,
+  minimumRegionCoverage: .25,
+});
 let referencePromise;
 
 // Only the violet strokes participate in recognition; card artwork is discarded.
@@ -14,7 +22,8 @@ export function purpleMask(pixels, width, height, channels = 3) {
     const max = Math.max(r, g, b), min = Math.min(r, g, b), delta = max - min;
     if (max < 40 || delta / max < .4 || b !== max || delta === 0) continue;
     const hue = 60 * ((r - g) / delta + 4);
-    if (hue >= 258 && hue <= 303 && b > g * 1.45 && r > g * 1.1) mask[i] = 255;
+    // Printed violet shifts towards indigo under cool light and phone white balance.
+    if (hue >= 238 && hue <= 303 && b > g * 1.45 && r > g * 1.03) mask[i] = 255;
   }
   // Discard tiny colour specks, preserving connected segments of the drawing.
   const seen = new Uint8Array(mask.length);
@@ -35,11 +44,13 @@ export function purpleMask(pixels, width, height, channels = 3) {
   return mask;
 }
 
-async function prepare(input) {
+async function prepare(input, patternOnly = false) {
   const { data, info } = await sharp(input, { limitInputPixels: 24_000_000 })
     .rotate().resize(1000, 1000, { fit: 'inside', withoutEnlargement: true })
     .flatten({ background: '#fff' }).removeAlpha().toColourspace('srgb').raw().toBuffer({ resolveWithObject: true });
-  const mask = purpleMask(data, info.width, info.height, info.channels);
+  const mask = patternOnly ? Uint8Array.from({ length: info.width * info.height }, (_, i) =>
+    Math.max(data[i * info.channels], data[i * info.channels + 1], data[i * info.channels + 2]) < 180 ? 255 : 0)
+    : purpleMask(data, info.width, info.height, info.channels);
   let minX = info.width, minY = info.height, maxX = 0, maxY = 0, count = 0;
   for (let i = 0; i < mask.length; i++) if (mask[i]) {
     const x = i % info.width, y = Math.floor(i / info.width);
@@ -115,7 +126,7 @@ function matches(reference, photograph) {
       if (distance < best) { second = best; best = distance; candidate = i; }
       else if (distance < second) second = distance;
     }
-    if (best < 65 && best < second * .8 && !used.has(candidate)) {
+    if (best < 65 && best < second * .92 && !used.has(candidate)) {
       used.add(candidate); result.push({ from: point, to: photograph[candidate] });
     }
   }
@@ -131,8 +142,10 @@ function project(matrix, point) {
 function near(mask, point) {
   if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) return false;
   const x = Math.round(point.x), y = Math.round(point.y);
-  for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
-    if (dx * dx + dy * dy > 16) continue;
+  // About 2% of the normalized drawing accommodates hand-placed card offsets.
+  const radius = DRAGON_TOLERANCE.pointRadius;
+  for (let dy = -radius; dy <= radius; dy++) for (let dx = -radius; dx <= radius; dx++) {
+    if (dx * dx + dy * dy > radius * radius) continue;
     const nx = x + dx, ny = y + dy;
     if (nx >= 0 && ny >= 0 && nx < SIZE && ny < SIZE && mask[ny * SIZE + nx]) return true;
   }
@@ -156,36 +169,55 @@ function coverage(reference, photograph, model) {
 
 /** Compare the assembled dragon, allowing perspective, rotation and missing overlap strokes. */
 export async function recognizeDragon(input) {
-  if (!referencePromise) referencePromise = readFile(join(process.cwd(), 'scan-reference', 'dragon.png')).then(prepare);
-  const reference = await referencePromise;
-  if (!reference) throw new Error('INVALID_REFERENCE');
+  // Both references contain only the drawing, never card images or text. The
+  // visible variant models stroke interruptions caused by card overlap.
+  if (!referencePromise) referencePromise = Promise.all(['dragon.png', 'dragon-visible.png'].map(file =>
+    readFile(join(process.cwd(), 'scan-reference', file)).then(input => prepare(input, true))));
+  const references = await referencePromise;
+  if (references.some(reference => !reference)) throw new Error('INVALID_REFERENCE');
   const photograph = await prepare(input);
   if (!photograph) return { accepted: false, reason: 'violet', coverage: 0, precision: 0 };
+  let best = { accepted: false, reason: 'alignment', coverage: 0, precision: 0 };
+  for (const reference of references) {
+    const result = comparePattern(reference, photograph);
+    if (result.accepted) return result;
+    if (result.coverage * result.precision > best.coverage * best.precision) best = result;
+  }
+  return best;
+}
+
+function comparePattern(reference, photograph) {
   const pairs = matches(reference.features, photograph.features);
   if (pairs.length < 14) return { accepted: false, reason: 'alignment', coverage: 0, precision: 0 };
   const from = pairs.map(pair => pair.from), to = pairs.map(pair => pair.to);
-  const kernel = new jsfeat.motion_model.homography2d();
-  const model = new jsfeat.matrix_t(3, 3, jsfeat.F32C1_t);
-  const inliers = new jsfeat.matrix_t(pairs.length, 1, jsfeat.U8C1_t);
-  const params = new jsfeat.ransac_params_t(4, 4, .65, .995);
-  if (!jsfeat.motion_estimator.ransac(params, kernel, from, to, pairs.length, model, inliers, 1800)) {
-    return { accepted: false, reason: 'alignment', coverage: 0, precision: 0 };
+  let bestScore = null;
+  // Evaluate several plausible alignments: the best feature consensus can belong
+  // to one card, while the actual assembly must cover the entire drawing.
+  for (const tolerance of [8, 16, 24]) for (let trial = 0; trial < 5; trial++) {
+    const kernel = new jsfeat.motion_model.homography2d();
+    const model = new jsfeat.matrix_t(3, 3, jsfeat.F32C1_t);
+    const inliers = new jsfeat.matrix_t(pairs.length, 1, jsfeat.U8C1_t);
+    const params = new jsfeat.ransac_params_t(4, tolerance, .75, .999);
+    if (!jsfeat.motion_estimator.ransac(params, kernel, from, to, pairs.length, model, inliers, 5000)) continue;
+    const good = pairs.filter((_, i) => inliers.data[i]);
+    if (good.length < 12) continue;
+    kernel.run(good.map(pair => pair.from), good.map(pair => pair.to), model, good.length);
+    // A physical assembly cannot mirror the drawing or collapse it into one small region.
+    const corners = [{ x: 24, y: 24 }, { x: 488, y: 24 }, { x: 488, y: 488 }, { x: 24, y: 488 }].map(p => project(model.data, p));
+    let area = 0;
+    for (let i = 0; i < 4; i++) {
+      const p = corners[i], q = corners[(i + 1) % 4]; area += p.x * q.y - q.x * p.y;
+    }
+    if (!Number.isFinite(area) || area < SIZE * SIZE * .5 || area > SIZE * SIZE * 3) {
+      continue;
+    }
+    const score = coverage(reference, photograph, model);
+    const occupied = score.regions.filter(value => value !== null);
+    const enoughRegions = occupied.filter(value => value >= DRAGON_TOLERANCE.regionCoverage).length >= Math.ceil(occupied.length * DRAGON_TOLERANCE.requiredRegionFraction);
+    const accepted = score.coverage >= DRAGON_TOLERANCE.minimumCoverage && score.precision >= DRAGON_TOLERANCE.minimumPrecision && enoughRegions && occupied.every(value => value >= DRAGON_TOLERANCE.minimumRegionCoverage);
+    if (accepted) return { accepted: true, reason: 'match', coverage: score.coverage, precision: score.precision };
+    if (!bestScore || score.coverage * score.precision > bestScore.coverage * bestScore.precision) bestScore = score;
   }
-  const good = pairs.filter((_, i) => inliers.data[i]);
-  if (good.length < 12) return { accepted: false, reason: 'alignment', coverage: 0, precision: 0 };
-  kernel.run(good.map(pair => pair.from), good.map(pair => pair.to), model, good.length);
-  // A physical assembly cannot mirror the drawing or collapse it into one small region.
-  const corners = [{ x: 24, y: 24 }, { x: 488, y: 24 }, { x: 488, y: 488 }, { x: 24, y: 488 }].map(p => project(model.data, p));
-  let area = 0;
-  for (let i = 0; i < 4; i++) {
-    const p = corners[i], q = corners[(i + 1) % 4]; area += p.x * q.y - q.x * p.y;
-  }
-  if (!Number.isFinite(area) || area < SIZE * SIZE * .5 || area > SIZE * SIZE * 3) {
-    return { accepted: false, reason: 'alignment', coverage: 0, precision: 0 };
-  }
-  const score = coverage(reference, photograph, model);
-  const occupied = score.regions.filter(value => value !== null);
-  const enoughRegions = occupied.filter(value => value >= .45).length >= Math.ceil(occupied.length * .8);
-  const accepted = score.coverage >= .7 && score.precision >= .67 && enoughRegions && occupied.every(value => value >= .25);
-  return { accepted, reason: accepted ? 'match' : 'incomplete', coverage: score.coverage, precision: score.precision };
+  return bestScore ? { accepted: false, reason: 'incomplete', coverage: bestScore.coverage, precision: bestScore.precision }
+    : { accepted: false, reason: 'alignment', coverage: 0, precision: 0 };
 }

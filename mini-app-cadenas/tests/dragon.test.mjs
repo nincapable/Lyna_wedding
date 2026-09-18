@@ -7,7 +7,32 @@ import { createRequire } from 'node:module';
 import { recognizeDragon, purpleMask } from '../lib/dragon-recognition.mjs';
 
 const resolveModule = createRequire(import.meta.url);
-const reference = fs.readFileSync('scan-reference/dragon.png');
+const pattern = fs.readFileSync('scan-reference/dragon.png');
+const { data: patternPixels, info: patternInfo } = await sharp(pattern).resize(1000).flatten({ background: '#fff' }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+const colouredPattern = Buffer.alloc(patternInfo.width * patternInfo.height * 3, 255);
+for (let i = 0; i < patternInfo.width * patternInfo.height; i++) {
+  if (Math.max(...patternPixels.subarray(i * patternInfo.channels, (i + 1) * patternInfo.channels)) < 180) colouredPattern.set([143, 0, 255], i * 3);
+}
+const reference = await sharp(colouredPattern, { raw: { width: patternInfo.width, height: patternInfo.height, channels: 3 } }).png().toBuffer();
+
+test('recognizes the actual printed assembly, including phone compression and cooler light', async () => {
+  const printed = fs.readFileSync('tests/fixtures/printed-dragon.jpg');
+  const examples = [
+    printed,
+    await sharp(printed).resize(1400).jpeg({ quality: 90 }).toBuffer(),
+    await sharp(printed).resize(900).jpeg({ quality: 65 }).toBuffer(),
+    await sharp(printed).resize(1000).rotate(90).jpeg().toBuffer(),
+    await sharp(printed).resize(1000).rotate(15, { background: '#fff' }).jpeg().toBuffer(),
+    await sharp(printed).resize(1000).modulate({ brightness: .75, saturation: .85 }).jpeg().toBuffer(),
+  ];
+  for (let i = 0; i < examples.length; i++) {
+    assert.equal((await recognizeDragon(examples[i])).accepted, true, `Printed example ${i}`);
+  }
+  const flipped = await sharp(printed).flop().jpeg().toBuffer();
+  assert.equal((await recognizeDragon(flipped)).accepted, false, 'Mirrored assembly');
+  const card = await sharp(printed).extract({ left: 40, top: 220, width: 550, height: 620 }).jpeg().toBuffer();
+  assert.equal((await recognizeDragon(card)).accepted, false, 'A card alone');
+});
 
 test('recognizes the reference under JPEG compression, rotation and dimmer light', async () => {
   const examples = [
