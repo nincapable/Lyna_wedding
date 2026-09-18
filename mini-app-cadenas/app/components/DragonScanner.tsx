@@ -39,7 +39,6 @@ export default function DragonScanner({ disabled, onScan }: { disabled: boolean;
   }
 
   return <section className="dragon-scanner" aria-label="Scanner le dragon violet" aria-busy={locked}>
-    <p>Reconstituez le dragon violet avec vos cartes. Photographiez l’ensemble bien de dessus, à plat et sans reflet.</p>
     <div className="scan-buttons">
       <button type="button" onClick={() => camera.current?.click()} disabled={locked}>Photographier le dragon</button>
       <button type="button" onClick={() => gallery.current?.click()} disabled={locked}>Choisir une photo</button>

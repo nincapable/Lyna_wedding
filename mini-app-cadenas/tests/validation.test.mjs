@@ -246,7 +246,7 @@ test('submitting device shows success and ignores a poll started before submissi
 });
 
 test('a recognized photo authorizes code entry without opening the second lock', async () => {
-  const initial = { code: 'ABC123', stage: 2, attempts: 0, acceptAnyCode: true, updatedAt: '2026-09-18T10:00:00Z' };
+  const initial = { code: 'ABC123', stage: 2, attempts: 0, acceptAnyCode: false, updatedAt: '2026-09-18T10:00:00Z' };
   const states = [initial, '', '', '', 'cadenas', '', false, null];
   let index = 0;
   const callbacks = [];
@@ -267,7 +267,11 @@ test('a recognized photo authorizes code entry without opening the second lock',
     if (!node || typeof node !== 'object') return [];
     return [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)];
   }
-  assert.equal(nodes(tree).some(node => node.type === 'form'), false);
+  assert.equal(nodes(tree).find(node => node.props?.id === 'lock-code').props.disabled, true);
+  assert.equal(nodes(tree).find(node => node.type === 'form').props.children[2].props.disabled, true);
+  states[0] = { ...initial, acceptAnyCode: true }; index = 0;
+  assert.equal(nodes(home.default()).find(node => node.props?.id === 'lock-code').props.disabled, false);
+  states[0] = initial;
   callbacks[0](initial);
   function findScanner(node) {
     if (!node || typeof node !== 'object') return null;
@@ -297,6 +301,7 @@ test('a recognized photo authorizes code entry without opening the second lock',
     const afterScan = home.default();
     const codeForm = nodes(afterScan).find(node => node.type === 'form');
     assert.ok(codeForm);
+    assert.equal(nodes(codeForm).find(node => node.props?.id === 'lock-code').props.disabled, false);
     assert.equal(nodes(codeForm).find(node => node.type === 'label').props.children, 'Combinaison');
     global.fetch = async (url, init) => {
       assert.equal(url, '/api/games/ABC123');

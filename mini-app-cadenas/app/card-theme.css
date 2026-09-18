@@ -29,6 +29,7 @@ form{margin:8px 4px 0;padding:14px 18px;border:3px ridge #88704b;background:#c9b
 .unlock-check{stroke:#94d7a5;stroke-dasharray:40;stroke-dashoffset:40;animation:unlock-tick .3s .45s ease-out forwards}
 .unlock-wave{position:absolute;inset:0;border:1px solid #e5c87f;border-radius:50%;animation:unlock-ripple 1.2s ease-out both}
 @keyframes unlock-reveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+#lock-code:disabled{opacity:.5;color:#8c8c8c;border-color:#80776a;cursor:not-allowed}form button:disabled{opacity:.5;filter:grayscale(1);cursor:not-allowed}
 .suspect-list{border:0;padding:0;margin:24px 0;display:grid;gap:12px}.suspect-list legend{margin-bottom:12px;color:#d6ad58}.suspect-card{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid #75603f;border-radius:6px;background:#11161b;color:#e7d5b2;cursor:pointer}.suspect-card.selected{border-color:#e5c87f;background:#302719}.suspect-card input{width:20px;height:20px;margin:0;flex-shrink:0;accent-color:#d6ad58}.suspect-card small{display:block;margin-top:6px;color:#b9ac91;line-height:1.5}.accusation-panel>p,.investigation-result p{color:#b9ac91;line-height:1.7}.accusation-panel .primary:disabled{opacity:.5;cursor:default}.investigation-result{text-align:center}.result-ring{display:block;width:min(100%,400px);height:auto;margin:0 auto}.investigation-result .primary{margin-top:20px}
 @keyframes unlock-open{from{transform:rotate(0)}to{transform:rotate(-28deg) translateY(-5px)}}
 @keyframes unlock-tick{to{stroke-dashoffset:0}}
