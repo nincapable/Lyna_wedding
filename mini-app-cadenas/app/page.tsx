@@ -22,6 +22,7 @@ export default function Home() {
   const actionPending = useRef(false);
   const syncGeneration = useRef(0);
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
+  const [scanToken, setScanToken] = useState('');
   const activeDocument = ENQUETE_BATCHES
     .filter(batch => game && game.stage >= batch.stage)
     .map(batch => batch.documents.find(doc => doc.id === selectedDocument))
@@ -37,6 +38,7 @@ export default function Home() {
     } else if (previous?.code !== next.code || next.stage < previous.stage) {
       setUnlockedStage(null);
       setSelectedDocument(null);
+      setScanToken('');
     }
     latestGame.current = next;
     setGame(next);
@@ -119,13 +121,19 @@ export default function Home() {
         ? { method: 'POST', body: body as FormData }
         : { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? 'Action refusée.');
+      if (!response.ok) {
+        if (data.scanRequired) setScanToken('');
+        throw new Error(data.error ?? 'Action refusée.');
+      }
       applyGame(data);
+      if (typeof data.scanToken === 'string') setScanToken(data.scanToken);
+      if (scanning && !data.accepted) setScanToken('');
+      if (data.stage === 3) setScanToken('');
       if ((scanning || (!(body instanceof FormData) && body.action === 'submit')) && data.accepted === true && (data.unlockedStage === 1 || data.unlockedStage === 2)) {
         setUnlockedStage(data.unlockedStage);
         setTab('cadenas');
       }
-      setCode(''); setMessage(data.message ?? 'État synchronisé.');
+      setCode(''); setMessage(!(body instanceof FormData) && body.action === 'set-bypass' ? 'Réglage MJ enregistré.' : data.message ?? 'État synchronisé.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Erreur inconnue.'); }
     finally { actionPending.current = false; setBusy(false); }
   }
@@ -134,6 +142,7 @@ export default function Home() {
     localStorage.removeItem('bague-game-code'); localStorage.removeItem('bague-gm-token');
     latestGame.current = null;
     setSelectedDocument(null);
+    setScanToken('');
     syncGeneration.current++;
     setGame(null); setGmToken(''); setJoinCode(''); setMessage(''); setUnlockedStage(null);
   }
@@ -167,7 +176,7 @@ export default function Home() {
             <path className="unlock-check" d="m37 67 9 9 18-20" />
           </svg>
         </div>
-        <p className="eyebrow">{unlockedStage === 2 ? 'Dragon validé' : 'Combinaison validée'}</p>
+        <p className="eyebrow">Combinaison validée</p>
         <h1>Rapports d’enquête déverrouillés</h1>
         <p>L’engramme {unlockedStage} est disponible dans l’onglet Enquête.</p>
       </div> : game.stage === 3 ? <div className="victory"><div className="sigil complete">✦</div><p className="eyebrow">Continuum restauré</p><h1>Le passage est ouvert</h1><p>Les deux engrammes de rapports d’enquête sont accessibles sur tous les appareils.</p></div> : <>
@@ -178,9 +187,9 @@ export default function Home() {
         <div className={`crystal-art ${game.stage === 2 ? 'second' : ''}`}>
           <Image key={game.stage} src={game.stage === 1 ? '/images/cristal-36.png' : '/images/cristal-500.png'} alt={game.stage === 1 ? 'Cristal violet portant le nombre 36' : 'Cristal rouge portant le nombre 500'} width={1640} height={959} sizes="(max-width: 600px) 90vw, 560px" priority />
         </div>
-        <div className="copy"><p className="step-label">Cadenas {game.stage}</p><h1>Rapports d’enquête</h1><p>{game.stage === 1 ? 'Saisissez la combinaison à quatre chiffres révélée par l’enquête.' : 'Reconstituez puis scannez le dragon violet pour accéder à l’engramme 2.'}</p></div>
+        <div className="copy"><p className="step-label">Cadenas {game.stage}</p><h1>Rapports d’enquête</h1><p>{game.stage === 1 ? 'Saisissez la combinaison à quatre chiffres révélée par l’enquête.' : scanToken ? 'Dragon reconnu. Saisissez la combinaison à quatre chiffres pour ouvrir le cadenas 2.' : 'Reconstituez puis scannez le dragon violet pour accéder à la saisie du code.'}</p></div>
         {game.stage === 2 && <DragonScanner disabled={busy || unlockedStage !== null} onScan={action} />}
-        {(game.stage === 1 || game.acceptAnyCode) && <form onSubmit={e => { e.preventDefault(); void action({ action: 'submit', code }); }}><label htmlFor="lock-code">{game.stage === 2 ? 'Combinaison — kill switch actif' : 'Combinaison'}</label>
+        {(game.stage === 1 || scanToken) && <form onSubmit={e => { e.preventDefault(); void action({ action: 'submit', code, ...(game.stage === 2 ? { scanToken } : {}) }); }}><label htmlFor="lock-code">Combinaison</label>
           <input id="lock-code" value={code} onChange={e => { setCode(e.target.value.replace(/\D/g, '').slice(0, 4)); setMessage(''); }} inputMode="numeric" placeholder="0000" />
           <button disabled={busy || code.length !== 4}>Tenter la combinaison</button></form>}
         <p className={`feedback ${message ? 'visible' : ''}`}>{message || 'Essais illimités — la progression est partagée.'}</p><p className="attempts">Essais illimités — aucune limite de tentatives.<br />Essais de la partie : {game.attempts}</p>
@@ -196,7 +205,7 @@ export default function Home() {
         {game.stage >= batch.stage ? batch.documents.map(doc => <article key={doc.id}><h3>{doc.title}</h3><button type="button" className="document-open" onClick={() => setSelectedDocument(doc.id)} aria-label={`Consulter : ${doc.title}`}>Consulter le document</button></article>) : <p className="batch-locked">Déverrouillez le cadenas {batch.number} pour accéder à ces {batch.documents.length} documents.</p>}
       </section>)}
     </div>}
-    {tab === 'mj' && gmToken && <div className="panel gm-panel"><p className="eyebrow">Console du chronomancien</p><h1>Contrôle MJ</h1><p>Ces commandes modifient tous les appareils.</p><div className="kill-switch"><h2>Kill switch des cadenas</h2><p>{game.acceptAnyCode ? 'Activé : toute combinaison de quatre chiffres ou photo envoyée par les joueurs est valide et ouvre le cadenas.' : 'Désactivé : le premier cadenas demande la bonne combinaison et le second le dragon reconstitué.'}</p><button type="button" role="switch" aria-checked={game.acceptAnyCode} onClick={() => action({ action: 'set-bypass', gmToken, enabled: !game.acceptAnyCode })} disabled={busy}>{game.acceptAnyCode ? 'Désactiver le kill switch' : 'Activer le kill switch'}</button><p>Activer ce réglage ne change pas l’étape : les joueurs doivent saisir une combinaison ou vérifier une photo. Réinitialiser la partie le désactive.</p></div><div className="gm-actions"><button onClick={() => action({ action: 'advance', gmToken })} disabled={busy || game.stage === 3}>Débloquer l’étape suivante</button><button className="danger" onClick={() => action({ action: 'reset', gmToken })} disabled={busy}>Réinitialiser la partie</button></div></div>}
+    {tab === 'mj' && gmToken && <div className="panel gm-panel"><p className="eyebrow">Console du chronomancien</p><h1>Contrôle MJ</h1><p>Ces commandes modifient tous les appareils.</p><div className="kill-switch"><h2>Kill switch des cadenas</h2><p>{game.acceptAnyCode ? 'Activé : toute combinaison de quatre chiffres est valide. Pour le cadenas 2, toute photo vérifiée autorise la saisie du code.' : 'Désactivé : le premier cadenas demande la bonne combinaison et le second un scan du dragon reconstitué puis la bonne combinaison.'}</p><button type="button" role="switch" aria-checked={game.acceptAnyCode} onClick={() => action({ action: 'set-bypass', gmToken, enabled: !game.acceptAnyCode })} disabled={busy}>{game.acceptAnyCode ? 'Désactiver le kill switch' : 'Activer le kill switch'}</button><p>Activer ce réglage ne change pas l’étape. Le cadenas 2 demande toujours un scan validé avant la saisie du code. Réinitialiser la partie désactive le réglage.</p></div><div className="gm-actions"><button onClick={() => action({ action: 'advance', gmToken })} disabled={busy || game.stage === 3}>Débloquer l’étape suivante</button><button className="danger" onClick={() => action({ action: 'reset', gmToken })} disabled={busy}>Réinitialiser la partie</button></div></div>}
     {game.stage === 3 && <div hidden={tab !== 'accusation'}><Accusation key={game.code} gameCode={game.code} /></div>}
     <footer className="game-footer"><span>Dernière évolution : {new Date(game.updatedAt).toLocaleTimeString('fr-FR')}</span><button onClick={leaveGame}>Quitter</button></footer>
   </section></main>;

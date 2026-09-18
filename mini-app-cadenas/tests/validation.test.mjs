@@ -40,11 +40,19 @@ test('final accusation checks the dossier culprit and report remains gated by bo
 });
 
 function load(path, dependencies) {
+  dependencies = { '@/lib/scan-proof': loadProof(), ...dependencies };
   const code = ts.transpileModule(fs.readFileSync(path, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const exports = {};
   new Function('require', 'exports', code)(name => dependencies[name] ?? resolveModule(name), exports);
+  return exports;
+}
+
+function loadProof() {
+  const code = ts.transpileModule(fs.readFileSync('lib/scan-proof.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+  const exports = {};
+  new Function('require', 'exports', code)(resolveModule, exports);
   return exports;
 }
 
@@ -169,7 +177,7 @@ test('kill switch submissions explicitly confirm the unlocked stage', async () =
     },
   });
   const submit = async code => (await route.PATCH(new Request('http://localhost/api/games/ABC123', {
-    method: 'PATCH', body: JSON.stringify({ action: 'submit', code }),
+    method: 'PATCH', body: JSON.stringify({ action: 'submit', code, ...(row.stage === 2 ? { scanToken: loadProof().scanProof(row) } : {}) }),
   }), { params: Promise.resolve({ code: 'ABC123' }) })).json();
   for (const stage of [1, 2]) {
     const result = await submit('0000');
@@ -237,8 +245,8 @@ test('submitting device shows success and ignores a poll started before submissi
   }
 });
 
-test('a recognized photo directly triggers the second unlock animation on the submitting device', async () => {
-  const initial = { code: 'ABC123', stage: 2, attempts: 0, acceptAnyCode: false, updatedAt: '2026-09-18T10:00:00Z' };
+test('a recognized photo authorizes code entry without opening the second lock', async () => {
+  const initial = { code: 'ABC123', stage: 2, attempts: 0, acceptAnyCode: true, updatedAt: '2026-09-18T10:00:00Z' };
   const states = [initial, '', '', '', 'cadenas', '', false, null];
   let index = 0;
   const callbacks = [];
@@ -255,6 +263,11 @@ test('a recognized photo directly triggers the second unlock animation on the su
   const Scanner = () => null;
   const home = load('app/page.tsx', { react, '@/lib/enquete': load('lib/enquete.ts', {}), '@/app/components/Accusation': { default: () => null }, '@/app/components/DragonScanner': { default: Scanner } });
   const tree = home.default();
+  function nodes(node) {
+    if (!node || typeof node !== 'object') return [];
+    return [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)];
+  }
+  assert.equal(nodes(tree).some(node => node.type === 'form'), false);
   callbacks[0](initial);
   function findScanner(node) {
     if (!node || typeof node !== 'object') return null;
@@ -270,14 +283,29 @@ test('a recognized photo directly triggers the second unlock animation on the su
     assert.equal(url, '/api/games/ABC123/scan');
     assert.equal(init.method, 'POST');
     assert.ok(init.body instanceof FormData);
-    return Response.json({ ...initial, stage: 3, attempts: 1, updatedAt: '2026-09-18T10:00:01Z', accepted: true, unlockedStage: 2 });
+    return Response.json({ ...initial, stage: 2, attempts: 1, updatedAt: '2026-09-18T10:00:01Z', accepted: true, scanToken: 'validated-proof' });
   };
   try {
     const form = new FormData(); form.append('photo', new Blob(['photo'], { type: 'image/jpeg' }), 'dragon.jpg');
     await findScanner(tree).props.onScan(form);
-    assert.equal(states[0].stage, 3);
-    assert.equal(states[7], 2);
+    assert.equal(states[0].stage, 2);
+    assert.equal(states[7], null);
+    assert.equal(states[9], 'validated-proof');
     assert.equal(states[4], 'cadenas');
     assert.equal(states[6], false);
+    states[3] = '2543'; index = 0;
+    const afterScan = home.default();
+    const codeForm = nodes(afterScan).find(node => node.type === 'form');
+    assert.ok(codeForm);
+    assert.equal(nodes(codeForm).find(node => node.type === 'label').props.children, 'Combinaison');
+    global.fetch = async (url, init) => {
+      assert.equal(url, '/api/games/ABC123');
+      assert.equal(JSON.parse(init.body).scanToken, 'validated-proof');
+      return Response.json({ ...initial, stage: 3, updatedAt: '2026-09-18T10:00:02Z', accepted: true, unlockedStage: 2 });
+    };
+    codeForm.props.onSubmit({ preventDefault() {} });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(states[0].stage, 3);
+    assert.equal(states[7], 2);
   } finally { global.fetch = originalFetch; }
 });

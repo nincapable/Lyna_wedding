@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { databaseConfigured, db } from '@/lib/supabase';
+import { scanProof, verifiedScan } from '@/lib/scan-proof';
 
 const LOCKS = [
   (process.env.LOCK_1_CODES ?? '3816,7482,1904,2631,5279').split(','),
@@ -28,7 +29,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ c
   if (!databaseConfigured()) return NextResponse.json({ error: 'Base non configurée.' }, { status: 503 });
   const { code } = await context.params;
   try {
-    const body = await request.json() as { action?: string; code?: string; gmToken?: string; enabled?: boolean };
+    const body = await request.json() as { action?: string; code?: string; gmToken?: string; enabled?: boolean; scanToken?: string };
     const game = await findGame(code.toUpperCase());
     if (!game) return NextResponse.json({ error: 'Partie introuvable.' }, { status: 404 });
     let stage = game.stage;
@@ -38,11 +39,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ c
     if (body.action === 'submit') {
       if (stage === 3) return NextResponse.json({ ...publicGame(game), accepted: false });
       if (typeof body.code !== 'string' || !/^\d{4}$/.test(body.code)) return NextResponse.json({ error: 'La combinaison doit contenir quatre chiffres.' }, { status: 400 });
-      if (stage === 2 && !acceptAnyCode) return NextResponse.json({ error: 'Ce cadenas s’ouvre en scannant le dragon violet.' }, { status: 400 });
+      if (stage === 2 && !verifiedScan(game, body.scanToken)) return NextResponse.json({ error: 'Validez d’abord le scan du dragon violet avant de saisir le code.', scanRequired: true }, { status: 403 });
       attempts++;
       if (!acceptAnyCode && !LOCKS[stage - 1].includes(body.code)) {
-        const failed = await update(game.code, { attempts });
-        return NextResponse.json({ ...publicGame(failed), accepted: false, message: 'Combinaison refusée. La boucle tient encore.' });
+        const failed = await update(game.code, { attempts }, game.updated_at);
+        return NextResponse.json({ ...publicGame(failed), accepted: false, ...(stage === 2 ? { scanToken: scanProof(failed) } : {}), message: 'Combinaison refusée. La boucle tient encore.' });
       }
       stage = (stage + 1) as 2 | 3;
       message = stage === 3 ? 'Le continuum est restauré.' : 'Rapports d’enquête déverrouillés sur tous les appareils.';
@@ -57,14 +58,15 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ c
       }
       else return NextResponse.json({ error: 'Action inconnue.' }, { status: 400 });
     }
-    const updated = await update(game.code, { stage, attempts, ...(body.action === 'reset' ? { accept_any_code: acceptAnyCode } : {}) });
+    const updated = await update(game.code, { stage, attempts, ...(body.action === 'reset' ? { accept_any_code: acceptAnyCode } : {}) }, game.updated_at);
     return NextResponse.json({ ...publicGame(updated), message, ...(body.action === 'submit' ? { accepted: true, unlockedStage: game.stage } : {}) });
   } catch { return NextResponse.json({ error: 'Impossible de modifier la partie.' }, { status: 500 }); }
 }
 
-async function update(code: string, values: { stage?: number; attempts?: number; accept_any_code?: boolean }): Promise<Row> {
-  const response = await db(`game_sessions?code=eq.${encodeURIComponent(code)}`, { method: 'PATCH', body: JSON.stringify({ ...values, updated_at: new Date().toISOString() }) });
+async function update(code: string, values: { stage?: number; attempts?: number; accept_any_code?: boolean }, expectedVersion?: string): Promise<Row> {
+  const response = await db(`game_sessions?code=eq.${encodeURIComponent(code)}${expectedVersion ? `&updated_at=eq.${encodeURIComponent(expectedVersion)}` : ''}`, { method: 'PATCH', body: JSON.stringify({ ...values, updated_at: new Date().toISOString() }) });
   if (!response.ok) throw new Error('DB_ERROR');
   const [row] = await response.json() as Row[];
+  if (!row) throw new Error('SESSION_CHANGED');
   return row;
 }

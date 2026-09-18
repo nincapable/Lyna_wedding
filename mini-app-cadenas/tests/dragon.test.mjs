@@ -57,6 +57,7 @@ test('ignores card backgrounds, tolerates overlap occlusion and perspective, rej
 });
 
 function loadRoute(path, dependencies) {
+  if (path !== 'lib/scan-proof.ts') dependencies = { '@/lib/scan-proof': loadRoute('lib/scan-proof.ts', {}), ...dependencies };
   const code = ts.transpileModule(fs.readFileSync(path, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const exports = {};
   new Function('require', 'exports', code)(name => dependencies[name] ?? resolveModule(name), exports);
@@ -64,7 +65,7 @@ function loadRoute(path, dependencies) {
 }
 
 test('scan route enforces stage, server recognition, kill switch, attempts and concurrent reset', async () => {
-  const row = { code: 'ABC123', stage: 1, attempts: 0, accept_any_code: false, updated_at: new Date().toISOString() };
+  const row = { code: 'ABC123', stage: 1, attempts: 0, accept_any_code: false, updated_at: new Date().toISOString(), gm_token: 'secret' };
   let recognized = false, recognitionCalls = 0, concurrentChange = false;
   const route = loadRoute('app/api/games/[code]/scan/route.ts', {
     '@/lib/supabase': { databaseConfigured: () => true, db: async (_, init = {}) => {
@@ -88,7 +89,8 @@ test('scan route enforces stage, server recognition, kill switch, attempts and c
   assert.equal(failed.accepted, false); assert.equal(row.stage, 2); assert.equal(row.attempts, 1);
   recognized = true;
   const success = await (await post()).json();
-  assert.equal(success.accepted, true); assert.equal(success.unlockedStage, 2); assert.equal(row.stage, 3);
+  assert.equal(success.accepted, true); assert.ok(success.scanToken); assert.equal(success.unlockedStage, undefined); assert.equal(row.stage, 2);
+  row.stage = 3;
   assert.equal((await post()).status, 409);
   row.stage = 2; recognized = false; row.accept_any_code = true;
   const calls = recognitionCalls;
@@ -99,10 +101,30 @@ test('scan route enforces stage, server recognition, kill switch, attempts and c
   assert.equal((await post()).status, 409); assert.equal(row.stage, 2);
 });
 
-test('the second lock cannot be bypassed using its former numeric code', async () => {
+test('the second lock requires a valid scan before code submission, even with bypass active', async () => {
+  const row = { code: 'ABC123', stage: 2, attempts: 0, accept_any_code: false, gm_token: 'secret', updated_at: '2026-09-18T10:00:00Z' };
   const route = loadRoute('app/api/games/[code]/route.ts', {
-    '@/lib/supabase': { databaseConfigured: () => true, db: async () => Response.json([{ code: 'ABC123', stage: 2, attempts: 0, accept_any_code: false }]) },
+    '@/lib/supabase': { databaseConfigured: () => true, db: async (_, init = {}) => {
+      if (init.method === 'PATCH') Object.assign(row, JSON.parse(init.body));
+      return Response.json([row]);
+    } },
   });
-  const response = await route.PATCH(new Request('http://localhost/api/games/ABC123', { method: 'PATCH', body: JSON.stringify({ action: 'submit', code: '2543' }) }), { params: Promise.resolve({ code: 'ABC123' }) });
-  assert.equal(response.status, 400);
+  const submit = (code, scanToken) => route.PATCH(new Request('http://localhost/api/games/ABC123', { method: 'PATCH', body: JSON.stringify({ action: 'submit', code, scanToken }) }), { params: Promise.resolve({ code: 'ABC123' }) });
+  const proof = loadRoute('lib/scan-proof.ts', {});
+  for (const bypass of [false, true]) {
+    row.accept_any_code = bypass;
+    assert.equal((await submit('2543')).status, 403);
+    assert.equal((await submit('2543', 'forged')).status, 403);
+    assert.equal(row.stage, 2);
+  }
+  row.accept_any_code = false;
+  const oldProof = proof.scanProof(row);
+  const wrong = await (await submit('0000', oldProof)).json();
+  assert.equal(wrong.accepted, false); assert.equal(row.stage, 2); assert.ok(wrong.scanToken);
+  assert.equal((await submit('2543', oldProof)).status, 403);
+  const success = await (await submit('2543', wrong.scanToken)).json();
+  assert.equal(success.accepted, true); assert.equal(success.unlockedStage, 2); assert.equal(row.stage, 3);
+  row.stage = 2; row.updated_at = '2026-09-18T11:00:00Z'; row.accept_any_code = true;
+  assert.equal((await submit('0000', wrong.scanToken)).status, 403);
+  assert.equal((await (await submit('0000', proof.scanProof(row))).json()).accepted, true);
 });
