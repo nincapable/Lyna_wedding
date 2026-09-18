@@ -11,3 +11,7 @@ L’application utilise Supabase comme stockage partagé. Les secrets restent c�
 Ne jamais utiliser la clé service role dans une variable préfixée par `NEXT_PUBLIC_`.
 
 Le navigateur actualise l’état toutes les deux secondes. L’appareil qui crée la partie conserve localement le jeton MJ ; les appareils qui rejoignent la partie ne le reçoivent jamais.
+
+## Kill switch MJ
+
+Pour une base existante, réexécuter `supabase.sql` dans SQL Editor pour ajouter `accept_any_code` sans supprimer les parties. Seul le MJ peut activer ou désactiver le kill switch. Actif, il accepte toute combinaison de quatre chiffres pour les deux cadenas. Réinitialiser la partie le désactive.

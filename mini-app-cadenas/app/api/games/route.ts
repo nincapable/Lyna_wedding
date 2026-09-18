@@ -12,7 +12,7 @@ export async function POST() {
     const response = await db('game_sessions', { method: 'POST', body: JSON.stringify({ code, gm_token: gmToken, stage: 1, attempts: 0 }) });
     if (response.ok) {
       const [row] = await response.json();
-      return NextResponse.json({ code: row.code, stage: row.stage, attempts: row.attempts, updatedAt: row.updated_at, gmToken });
+      return NextResponse.json({ code: row.code, stage: row.stage, attempts: row.attempts, updatedAt: row.updated_at, acceptAnyCode: row.accept_any_code ?? false, gmToken });
     }
     if (response.status !== 409) return NextResponse.json({ error: 'Impossible de créer la partie.' }, { status: 500 });
   }

@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 
-type Game = { code: string; stage: 1 | 2 | 3; attempts: number; updatedAt: string };
+type Game = { code: string; stage: 1 | 2 | 3; attempts: number; updatedAt: string; acceptAnyCode: boolean };
 type Tab = 'cadenas' | 'enquete' | 'chronologie' | 'mj';
 const DOCUMENTS = [
   { title: 'Rapport d’anomalie', stage: 1, body: 'Une oscillation temporelle a été enregistrée près du vestiaire à 22 h 14. Trois signatures distinctes se chevauchent.' },
@@ -74,7 +74,7 @@ export default function Home() {
     setBusy(false);
   }
 
-  async function action(body: Record<string, string>) {
+  async function action(body: Record<string, string | boolean>) {
     if (!game) return;
     setBusy(true);
     try {
@@ -123,7 +123,7 @@ export default function Home() {
     </div>}
     {tab === 'enquete' && <div className="panel documents"><p className="eyebrow">Archives récupérées</p><h1>Dossier d’enquête</h1>{DOCUMENTS.map(doc => <article key={doc.title} className={game.stage >= doc.stage ? '' : 'locked'}><span>Lot {doc.stage}</span><h2>{game.stage >= doc.stage ? doc.title : 'Document verrouillé'}</h2><p>{game.stage >= doc.stage ? doc.body : 'Stabilisez le prochain sceau pour récupérer cette archive.'}</p></article>)}</div>}
     {tab === 'chronologie' && <div className="panel timeline"><p className="eyebrow">État partagé</p><h1>Chronologie</h1><ol><li className="done"><b>Connexion établie</b><span>Les voyageurs ont rejoint la même ligne.</span></li><li className={game.stage >= 2 ? 'done' : ''}><b>Sceau de la mémoire</b><span>{game.stage >= 2 ? 'Stabilisé.' : 'En attente de combinaison.'}</span></li><li className={game.stage >= 3 ? 'done' : ''}><b>Sceau de la convergence</b><span>{game.stage >= 3 ? 'Stabilisé.' : 'Verrouillé.'}</span></li></ol></div>}
-    {tab === 'mj' && gmToken && <div className="panel gm-panel"><p className="eyebrow">Console du chronomancien</p><h1>Contrôle MJ</h1><p>Ces commandes modifient tous les appareils.</p><div className="gm-actions"><button onClick={() => action({ action: 'advance', gmToken })} disabled={busy || game.stage === 3}>Débloquer l’étape suivante</button><button className="danger" onClick={() => action({ action: 'reset', gmToken })} disabled={busy}>Réinitialiser la partie</button></div></div>}
+    {tab === 'mj' && gmToken && <div className="panel gm-panel"><p className="eyebrow">Console du chronomancien</p><h1>Contrôle MJ</h1><p>Ces commandes modifient tous les appareils.</p><div className="kill-switch"><h2>Kill switch des cadenas</h2><p>{game.acceptAnyCode ? 'Activé : toute combinaison de quatre chiffres ouvre le cadenas en cours.' : 'Désactivé : seules les bonnes combinaisons ouvrent les cadenas.'}</p><button type="button" role="switch" aria-checked={game.acceptAnyCode} onClick={() => action({ action: 'set-bypass', gmToken, enabled: !game.acceptAnyCode })} disabled={busy}>{game.acceptAnyCode ? 'Désactiver le kill switch' : 'Activer le kill switch'}</button><p>Ce réglage reste actif pour les deux cadenas. Réinitialiser la partie le désactive.</p></div><div className="gm-actions"><button onClick={() => action({ action: 'advance', gmToken })} disabled={busy || game.stage === 3}>Débloquer l’étape suivante</button><button className="danger" onClick={() => action({ action: 'reset', gmToken })} disabled={busy}>Réinitialiser la partie</button></div></div>}
     <footer className="game-footer"><span>Dernière évolution : {new Date(game.updatedAt).toLocaleTimeString('fr-FR')}</span><button onClick={leaveGame}>Quitter</button></footer>
   </section></main>;
 }
